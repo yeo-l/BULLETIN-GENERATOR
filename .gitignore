@@ -1,0 +1,12 @@
+# Variables d'environnement sensibles
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# DHIS2 Platform
+node_modules
+.d2
+src/locales
+build

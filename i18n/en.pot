@@ -1,0 +1,29 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: i18next-conv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"POT-Creation-Date: 2025-07-28T23:17:11.435Z\n"
+"PO-Revision-Date: 2025-07-28T23:17:11.436Z\n"
+
+msgid "Erreur de connexion"
+msgstr "Erreur de connexion"
+
+msgid "Impossible de se connecter à DHIS2."
+msgstr "Impossible de se connecter à DHIS2."
+
+msgid "Détails de l'erreur"
+msgstr "Détails de l'erreur"
+
+msgid "Chargement..."
+msgstr "Chargement..."
+
+msgctxt "Application title"
+msgid "__MANIFEST_APP_TITLE"
+msgstr "bulletin-generator"
+
+msgctxt "Application description"
+msgid "__MANIFEST_APP_DESCRIPTION"
+msgstr ""
