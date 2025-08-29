@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2025-08-25T11:40:09.131Z\n"
-"PO-Revision-Date: 2025-08-25T11:40:09.132Z\n"
+"POT-Creation-Date: 2025-08-29T12:20:41.661Z\n"
+"PO-Revision-Date: 2025-08-29T12:20:41.661Z\n"
 
 msgid "Erreur de connexion"
 msgstr "Erreur de connexion"
@@ -31,11 +31,3 @@ msgstr "Historique"
 
 msgid "Paramétrage"
 msgstr "Paramétrage"
-
-msgctxt "Application title"
-msgid "__MANIFEST_APP_TITLE"
-msgstr "bulletin-generator"
-
-msgctxt "Application description"
-msgid "__MANIFEST_APP_DESCRIPTION"
-msgstr ""

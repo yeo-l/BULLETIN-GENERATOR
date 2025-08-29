@@ -2,10 +2,12 @@ import { useDataQuery } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
 import React, { useState } from 'react'
 import { BrowserRouter } from 'react-router-dom'
+import './styles/globals.css'
 import classes from './App.module.css'
 import Sidebar from './components/Sidebar'
 import BulletinConfig from './components/BulletinConfig/BulletinConfig'
 import BulletinHistory from './components/BulletinHistory/BulletinHistory'
+import BulletinGenerator from './components/BulletinGenerator/BulletinGenerator'
 // './locales' will be populated after running start or build scripts
 import './locales'
 
@@ -57,11 +59,11 @@ const MyApp = () => {
 
     return (
         <BrowserRouter>
-            <div className="App" style={{ display: 'flex', minHeight: '100vh' }}>
+            <div className={classes.App} style={{ display: 'flex', minHeight: '100vh' }}>
                 <Sidebar onSelect={(componentName) => {
                     if (componentName === 'config') setActiveContent(<BulletinConfig />)
                     else if (componentName === 'history') setActiveContent(<BulletinHistory />)
-                    else if (componentName === 'generate') setActiveContent(<BulletinConfig />)
+                    else if (componentName === 'generate') setActiveContent(<BulletinGenerator />)
                     else setActiveContent(null)
                 }} />
                 <main style={{ flex: 1, padding: '16px' }}>
