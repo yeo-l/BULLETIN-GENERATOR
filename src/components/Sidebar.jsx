@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import {
   Home,
   Settings,
   History,
   FileText,
 } from "lucide-react";
-import i18n from "../locales";
+import i18n from "@dhis2/d2-i18n";
+import "../locales";
 
 const menus = [
   { id: 'home', label: i18n.t("Home"), icon: Home },
@@ -14,7 +15,7 @@ const menus = [
   { id: 'config', label: i18n.t("Paramétrage"), icon: Settings },
 ];
 
-export default function Sidebar({ onSelect }) {
+function Sidebar({ onSelect }) {
   const [current, setCurrent] = useState('home');
 
   const handleSelect = (id) => {
@@ -95,3 +96,5 @@ export default function Sidebar({ onSelect }) {
     </aside>
   );
 }
+
+export default memo(Sidebar);

@@ -5,8 +5,11 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2025-08-25T11:40:09.131Z\n"
-"PO-Revision-Date: 2025-08-25T11:40:09.132Z\n"
+"POT-Creation-Date: 2025-08-29T13:04:16.122Z\n"
+"PO-Revision-Date: 2025-08-29T13:04:16.122Z\n"
+
+msgid "Chargement..."
+msgstr "Chargement..."
 
 msgid "Erreur de connexion"
 msgstr "Erreur de connexion"
@@ -14,11 +17,20 @@ msgstr "Erreur de connexion"
 msgid "Impossible de se connecter à DHIS2."
 msgstr "Impossible de se connecter à DHIS2."
 
+msgid "Vérifiez que vous êtes connecté à DHIS2"
+msgstr "Vérifiez que vous êtes connecté à DHIS2"
+
+msgid "Rafraîchissez la page après vous être connecté"
+msgstr "Rafraîchissez la page après vous être connecté"
+
+msgid "Vérifiez votre connexion internet"
+msgstr "Vérifiez votre connexion internet"
+
+msgid "Contactez l'administrateur si le problème persiste"
+msgstr "Contactez l'administrateur si le problème persiste"
+
 msgid "Détails de l'erreur"
 msgstr "Détails de l'erreur"
-
-msgid "Chargement..."
-msgstr "Chargement..."
 
 msgid "Home"
 msgstr "Home"
@@ -31,11 +43,3 @@ msgstr "Historique"
 
 msgid "Paramétrage"
 msgstr "Paramétrage"
-
-msgctxt "Application title"
-msgid "__MANIFEST_APP_TITLE"
-msgstr "bulletin-generator"
-
-msgctxt "Application description"
-msgid "__MANIFEST_APP_DESCRIPTION"
-msgstr ""
