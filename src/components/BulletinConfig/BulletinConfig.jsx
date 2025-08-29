@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { Button, Card, InputField, Checkbox, SingleSelect, MultiSelect, NoticeBox } from '@dhis2/ui'
 import { Save } from 'lucide-react'
 
@@ -18,19 +18,39 @@ const BulletinConfig = () => {
     })
     const [saveStatus, setSaveStatus] = useState(null)
 
-    const handleSave = () => {
-        // Logique de sauvegarde à implémenter
-        console.log('Sauvegarde de la configuration:', config)
-        setSaveStatus({ type: 'success', message: 'Configuration sauvegardée avec succès' })
-    }
-
-    const handleDiseaseChange = (diseaseValue, checked) => {
-        if (checked) {
-            setConfig({ ...config, diseases: [...config.diseases, diseaseValue] })
-        } else {
-            setConfig({ ...config, diseases: config.diseases.filter(d => d !== diseaseValue) })
+    const handleSave = useCallback(async () => {
+        try {
+            setSaveStatus({ type: 'info', message: 'Sauvegarde en cours...' })
+            
+            // Validation des données
+            if (!config.program || !config.coverTitle || !config.periodicity) {
+                throw new Error('Veuillez remplir tous les champs obligatoires')
+            }
+            
+            // Simulation d'une sauvegarde async
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            
+            // Ici vous ajouterez l'appel API DHIS2
+            console.log('Sauvegarde de la configuration:', config)
+            
+            setSaveStatus({ type: 'success', message: 'Configuration sauvegardée avec succès' })
+            
+            // Effacer le message après 3 secondes
+            setTimeout(() => setSaveStatus(null), 3000)
+        } catch (error) {
+            setSaveStatus({ type: 'error', message: error.message })
         }
-    }
+    }, [config])
+
+    const handleDiseaseChange = useCallback((diseaseValue, checked) => {
+        setConfig(prevConfig => {
+            if (checked) {
+                return { ...prevConfig, diseases: [...prevConfig.diseases, diseaseValue] }
+            } else {
+                return { ...prevConfig, diseases: prevConfig.diseases.filter(d => d !== diseaseValue) }
+            }
+        })
+    }, [])
 
     // Données de test
     const PROGRAM_OPTIONS = [
@@ -81,7 +101,7 @@ const BulletinConfig = () => {
             primary 
             onClick={handleSave} 
             icon={<Save size={16} />}
-            disabled={!config.name || config.diseases.length === 0}
+            disabled={!config.program || !config.coverTitle || !config.periodicity}
           >
             Sauvegarder
           </Button>
