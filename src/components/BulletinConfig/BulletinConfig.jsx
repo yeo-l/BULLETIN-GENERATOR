@@ -2,6 +2,36 @@ import React, { useState } from 'react'
 import { Button, Card, InputField, Checkbox, SingleSelect, MultiSelect, NoticeBox } from '@dhis2/ui'
 import { Save } from 'lucide-react'
 
+// --------------------
+// Static constants & helpers (defined outside component to avoid re-creation at every render)
+// --------------------
+
+export const PROGRAM_OPTIONS = [
+    { value: 'pev', label: 'PEV' },
+    { value: 'pnlt', label: 'PNLT' },
+    { value: 'pnn', label: 'PNN' },
+    { value: 'pnls', label: 'PNLS' },
+    { value: 'inhp', label: 'INHP' },
+    { value: 'inh', label: 'INH' },
+    { value: 'pnsme', label: 'PNSME' },
+]
+
+export const PERIOD_OPTIONS = [
+    { value: 'WEEKLY', label: 'Hebdomadaire' },
+    { value: 'BIWEEKLY', label: 'Bimensuel' },
+    { value: 'MONTHLY', label: 'Mensuel' },
+    { value: 'YEARLY', label: 'Annuel' },
+]
+
+// Simple layout helpers
+function Row({ children, className = '' }) {
+    return <div className={`grid grid-cols-12 gap-4 items-center ${className}`}>{children}</div>
+}
+
+function Col({ span = 12, children, className = '' }) {
+    return <div className={`col-span-${span} ${className}`}>{children}</div>
+}
+
 const BulletinConfig = () => {
     const [config, setConfig] = useState({
         name: '',
@@ -32,24 +62,6 @@ const BulletinConfig = () => {
         }
     }
 
-    // Données de test
-    const PROGRAM_OPTIONS = [
-        { value: "pev", label: "PEV" },
-        { value: "pnlt", label: "PNLT" },
-        { value: "pnn", label: "PNN" },
-        { value: "pnls", label: "PNLS" },
-        { value: "inhp", label: "INHP" },
-        { value: "inh", label: "INH" },
-        { value: "pnsme", label: "PNSME" },
-    ];
-      
-    const PERIOD_OPTIONS = [
-        { value: "WEEKLY", label: "Hebdomadaire" },
-        { value: "BIWEEKLY", label: "Bimensuel" },
-        { value: "MONTHLY", label: "Mensuel" },
-        { value: "YEARLY", label: "Annuel" },
-    ];
-
     const diseases = [
         { value: 'polio', label: 'Poliomyélite' },
         { value: 'measles', label: 'Rougeole' },
@@ -68,8 +80,7 @@ const BulletinConfig = () => {
         { value: 'summary', label: 'Résumé' }
     ]
 
-    function Row({ children, className = "" }) { return <div className={`grid grid-cols-12 gap-4 items-center ${className}`}>{children}</div>; }
-    function Col({ span = 12, children, className = "" }) { return <div className={`col-span-${span} ${className}`}>{children}</div>; }
+    // Row & Col declared at module level
 
     return (
         <div className="space-y-6">
