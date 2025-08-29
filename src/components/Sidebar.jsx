@@ -5,7 +5,7 @@ import {
   History,
   FileText,
 } from "lucide-react";
-import i18n from "../locales";
+import i18n from '@dhis2/d2-i18n';
 
 const menus = [
   { id: 'home', label: i18n.t("Home"), icon: Home },
