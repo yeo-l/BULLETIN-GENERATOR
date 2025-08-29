@@ -1,26 +1,24 @@
-import React, { useState } from "react";
+import React, { useCallback, memo } from "react";
 import {
   Home,
   Settings,
   History,
   FileText,
 } from "lucide-react";
-import i18n from "../locales";
+import i18n from "@dhis2/d2-i18n";
 
 const menus = [
-  { id: 'home', label: i18n.t("Home"), icon: Home },
-  { id: 'generate', label: i18n.t("Générer Bulletin"), icon: FileText },
-  { id: 'history', label: i18n.t("Historique"), icon: History },
-  { id: 'config', label: i18n.t("Paramétrage"), icon: Settings },
+  { id: 'home', label: "Accueil", icon: Home },
+  { id: 'generate', label: "Générer Bulletin", icon: FileText },
+  { id: 'history', label: "Historique", icon: History },
+  { id: 'config', label: "Paramétrage", icon: Settings },
 ];
 
-export default function Sidebar({ onSelect }) {
-  const [current, setCurrent] = useState('home');
+const Sidebar = memo(({ onSelect, current = 'home' }) => {
 
-  const handleSelect = (id) => {
-    setCurrent(id);
+  const handleSelect = useCallback((id) => {
     onSelect && onSelect(id);
-  };
+  }, [onSelect]);
 
   const asideStyle = {
     width: 226,
@@ -94,4 +92,7 @@ export default function Sidebar({ onSelect }) {
       </nav>
     </aside>
   );
-}
+});
+
+Sidebar.displayName = 'Sidebar';
+export default Sidebar;
