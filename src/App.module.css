@@ -1,35 +1,160 @@
 .container {
   width: 100%;
-  height: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: 1rem;
-}
-.App {
-  min-height: 100vh;
-}
-
-.App-header {
-  background-color: #282c34;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.App-header h1 {
-  margin: 0;
-  font-size: 1.8rem;
+.app {
+  min-height: 100vh;
+  display: flex;
+  background-color: #f8fafc;
+}
+
+.main {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background-color: #f8fafc;
+}
+
+/* Error styles */
+.errorTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #dc2626;
+}
+
+.errorMessage {
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
+}
+
+.errorSolutions {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.errorSolutions h3 {
+  margin-bottom: 1rem;
   font-weight: 600;
 }
 
-.App-header p {
-  margin: 0;
-  font-size: 1rem;
-  color: #61dafb;
+.errorSolutions ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+}
+
+.errorSolutions li {
+  margin-bottom: 0.5rem;
+}
+
+.errorDetails {
+  margin-top: 1.5rem;
+}
+
+.errorDetails summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.errorPre {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+/* Loading styles */
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loadingText {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Welcome styles */
+.welcomeSection {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.welcomeTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #1e293b;
+  text-align: center;
+}
+
+.welcomeCard {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 2rem;
+  border: 1px solid #e2e8f0;
+}
+
+.welcomeText {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #475569;
+  margin-bottom: 1.5rem;
+}
+
+.welcomeList {
+  margin-top: 1rem;
+  padding-left: 1.5rem;
+  color: #475569;
+}
+
+.welcomeList li {
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .main {
+    padding: 16px;
+  }
+  
+  .welcomeTitle {
+    font-size: 1.5rem;
+  }
+  
+  .welcomeCard {
+    padding: 1.5rem;
+  }
 }
 
