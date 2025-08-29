@@ -6,6 +6,7 @@ import classes from './App.module.css'
 import Sidebar from './components/Sidebar'
 import BulletinConfig from './components/BulletinConfig/BulletinConfig'
 import BulletinHistory from './components/BulletinHistory/BulletinHistory'
+import BulletinGenerator from './components/BulletinGenerator/BulletinGenerator'
 // './locales' will be populated after running start or build scripts
 import './locales'
 
@@ -61,7 +62,7 @@ const MyApp = () => {
                 <Sidebar onSelect={(componentName) => {
                     if (componentName === 'config') setActiveContent(<BulletinConfig />)
                     else if (componentName === 'history') setActiveContent(<BulletinHistory />)
-                    else if (componentName === 'generate') setActiveContent(<BulletinConfig />)
+                    else if (componentName === 'generate') setActiveContent(<BulletinGenerator />)
                     else setActiveContent(null)
                 }} />
                 <main style={{ flex: 1, padding: '16px' }}>
