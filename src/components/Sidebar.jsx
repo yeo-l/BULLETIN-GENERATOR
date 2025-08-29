@@ -1,142 +1,97 @@
 import React, { useState } from "react";
 import {
-  Bolt,
-  Boxes,
-  Building2,
-  ChevronDown,
-  ChevronRight,
-  Component,
-  Earth,
-  EllipsisVertical,
-  Grid2X2Check,
-  Group,
   Home,
-  IdCard,
-  ListTree,
-  LucideProps,
-  MonitorCog,
-  PictureInPicture,
-  Share2,
-  SquareCode,
-  SquareStack,
-  Table,
-  UserPen,
-  Users,
   Settings,
   History,
   FileText,
-  Variable,
 } from "lucide-react";
 import i18n from "../locales";
-import { Link } from "react-router-dom";
 
 const menus = [
-  { label: i18n.t("Home"), link: "/", icon: Home },
-  {
-    label: i18n.t("Générer Bulletin"),
-    groupId: "generate",
-    link: "#",
-    icon: FileText,
-  },
-  {
-    label: i18n.t("Historique"),
-    groupId: "history",
-    link: "#",
-    icon: History,
-  },
-  {
-    label: i18n.t("Paramétrage"),
-    groupId: "config",
-    link: "#",
-    icon: Settings,
-  },
- 
+  { id: 'home', label: i18n.t("Home"), icon: Home },
+  { id: 'generate', label: i18n.t("Générer Bulletin"), icon: FileText },
+  { id: 'history', label: i18n.t("Historique"), icon: History },
+  { id: 'config', label: i18n.t("Paramétrage"), icon: Settings },
 ];
 
-export default function Sidebar() {
-  const [openGroup, setOpenGroup] = useState(null);
-  const [currentLink, setCurrentLink] = useState(
-    window.location.href.split("#")[1]
-  );
+export default function Sidebar({ onSelect }) {
+  const [current, setCurrent] = useState('home');
 
-  const toggleGroup = (group) => {
-    setOpenGroup(openGroup === group ? null : group);
+  const handleSelect = (id) => {
+    setCurrent(id);
+    onSelect && onSelect(id);
+  };
+
+  const asideStyle = {
+    width: 226,
+    backgroundColor: '#0f172a', // bleu nuit
+    color: '#ffffff',
+    padding: 16,
+    minHeight: '100vh',
+    boxSizing: 'border-box',
+  };
+
+  const titleStyle = {
+    fontSize: 20,
+    fontWeight: 700,
+    marginBottom: 24,
+  };
+
+  const listStyle = {
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+  };
+
+  const linkBaseStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '8px 12px',
+    borderRadius: 6,
+    textDecoration: 'none',
+    cursor: 'pointer',
+    userSelect: 'none',
+    color: '#ffffff',
+  };
+
+  const activeStyle = {
+    backgroundColor: '#1e293b', // bleu plus clair pour l'actif
+    fontWeight: 600,
+  };
+
+  const iconStyle = {
+    color: '#f97316', // orange
   };
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-300 p-4 overflow-y-auto h-[calc(100vh-50px)]">
-      <h2 className="text-xl font-bold mb-4">HISPCI-AGB</h2>
-      {menus.map((menu, idx) => {
-        const { icon: Icon, groupId, link, label, subItems } = menu;
-        return !groupId ? (
-          <Link
-            key={`${link}-${idx}`}
-            to={link}
-            className={`block py-1 rounded hover:bg-gray-200 mb-4 ${
-              currentLink === link ? "font-semibold text-blue-900" : ""
-            }`}
-            onClick={() => setCurrentLink(link)}
-          >
-            <div className="flex gap-2 justify-items-center items-center">
-              <Icon size={15} />
-              {label}
-            </div>
-          </Link>
-        ) : (
-          <div className="mb-4" key={groupId}>
-            <button
-              className="flex items-center justify-between w-full text-left text-sm font-semibold text-gray-700 mb-1"
-              onClick={() => toggleGroup(groupId)}
-            >
-              <div
-                className={`flex gap-2 justify-items-center items-center ${
-                  currentLink.includes(`/${groupId}/`)
-                    ? "font-semibold text-blue-900"
-                    : ""
-                }`}
-              >
-                {Icon && <Icon size={18} />}
-                {label}
-              </div>
-
-              {openGroup === groupId ? (
-                <ChevronDown size={18} />
-              ) : (
-                <ChevronRight size={18} />
-              )}
-            </button>
-            {openGroup === groupId && (
-              <ul className="ml-2 space-y-1 text-sm text-gray-800 mt-3">
-                {subItems.map((subMenu, subIndex) => {
-                  const {
-                    icon: SubMenuIcon,
-                    link: submenuLink,
-                    label: subMenuLabel,
-                  } = subMenu;
-                  return (
-                    <li key={`${groupId}-${submenuLink}-${subIndex}`}>
-                      <Link
-                        to={submenuLink}
-                        className={`block px-2 py-1 rounded hover:bg-gray-200 ${
-                          currentLink === submenuLink
-                            ? "font-semibold text-blue-900"
-                            : ""
-                        }`}
-                        onClick={() => setCurrentLink(submenuLink)}
-                      >
-                        <div className="flex gap-2 justify-items-center items-center">
-                          <SubMenuIcon size={15} />
-                          {subMenuLabel}
-                        </div>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        );
-      })}
+    <aside style={asideStyle}>
+      <h2 style={titleStyle}>HISPCI-AGB</h2>
+      <nav>
+        <ul style={listStyle}>
+          {menus.map(({ id, label, icon: Icon }) => {
+            const style = current === id
+              ? { ...linkBaseStyle, ...activeStyle }
+              : linkBaseStyle;
+            return (
+              <li key={id}>
+                <a
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); handleSelect(id); }}
+                  style={style}
+                  aria-current={current === id ? 'page' : undefined}
+                >
+                  <Icon size={18} style={iconStyle} />
+                  <span>{label}</span>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
     </aside>
   );
 }

@@ -1,8 +1,11 @@
 import { useDataQuery } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
-import React from 'react'
+import React, { useState } from 'react'
+import { BrowserRouter } from 'react-router-dom'
 import classes from './App.module.css'
-import SystemInfo from './components/SystemInfo'
+import Sidebar from './components/Sidebar'
+import BulletinConfig from './components/BulletinConfig/BulletinConfig'
+import BulletinHistory from './components/BulletinHistory/BulletinHistory'
 // './locales' will be populated after running start or build scripts
 import './locales'
 
@@ -14,6 +17,7 @@ const query = {
 
 const MyApp = () => {
     const { error, loading, data } = useDataQuery(query)
+    const [activeContent, setActiveContent] = useState(null)
 
     if (error) {
         return (
@@ -52,9 +56,32 @@ const MyApp = () => {
     }
 
     return (
-        <div className="App">          
-            <Sidebar />
-        </div>
+        <BrowserRouter>
+            <div className="App" style={{ display: 'flex', minHeight: '100vh' }}>
+                <Sidebar onSelect={(componentName) => {
+                    if (componentName === 'config') setActiveContent(<BulletinConfig />)
+                    else if (componentName === 'history') setActiveContent(<BulletinHistory />)
+                    else if (componentName === 'generate') setActiveContent(<BulletinConfig />)
+                    else setActiveContent(null)
+                }} />
+                <main style={{ flex: 1, padding: '16px' }}>
+                    {activeContent || 
+                    <div>
+                        <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '24px' }}>
+                            Bienvenue sur le module de génération de bulletin PEV
+                        </h2>
+                        <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '24px' }}>
+                            <p>Ce module vous permet de générer des bulletins en fonction des données de votre organisation.</p>
+                            <ul style={{ marginTop: '16px', paddingLeft: '20px' }}>
+                                <li>Pour commencer si vous n'avez pas encore configuré les paramètres du bulletin, veuillez le faire dans la section "Paramétrage".</li>
+                                <li>Si vous avez déjà configuré les paramètres du bulletin, vous pouvez générer un bulletin dans la section "Générer Bulletin".</li>
+                            </ul>
+                        </div>
+                    </div>
+                    }
+                </main>
+            </div>
+        </BrowserRouter>
     )
 }
 
