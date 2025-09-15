@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Button, Card, InputField, Checkbox, SingleSelect, MultiSelect, NoticeBox } from '@dhis2/ui'
 import { Save, Plus, Settings, BarChart3, Clock, Trash2, ChevronRight, ChevronLeft, Search } from 'lucide-react'
 import BullOrgUnit from './BullOrgUnit'
+import BulletinIndicators from './BulletinIndicators'
 
 const BulletinConfig = () => {
     const [config, setConfig] = useState({
@@ -17,7 +18,8 @@ const BulletinConfig = () => {
         coverTitle: '',
         periodicity: '',
         sections: [],
-        selectedOrgUnits: []
+        selectedOrgUnits: [],
+        periodValue: {} // Added for relative period selection
     })
     const [saveStatus, setSaveStatus] = useState(null)
     const [showNewProgramModal, setShowNewProgramModal] = useState(false)
@@ -29,16 +31,18 @@ const BulletinConfig = () => {
 
     // Données de test - Options de programmes
     const PROGRAM_OPTIONS = [
-        { value: "PEV", label: "Programme élargie de vaccination" },
-        { value: "PNLT", label: "Programme national de lutte contre la tuberculose" },
-        { value: "PNN", label: "Programme national de nutrition" },
-        { value: "PNLS", label: "Programme national de lutte contre le SIDA" },
-        { value: "INHP", label: "Programme national de l'hygiène publique" },
-        { value: "PNSME", label: "Programme national de santé mère et enfant" },
+        { value: "PEV", label: "PEV" },
+        { value: "PNLT", label: "PNLT" },
+        { value: "PNN", label: "PNN" },
+        { value: "PNLS", label: "PNLS" },
+        { value: "INHP", label: "INHP" },
+        { value: "PNSME", label: "PNSME" },
     ]
       
     const PERIOD_OPTIONS = [
         { value: "WEEKLY", label: "Hebdomadaire" },
+        { value: "QUARTERLY", label: "Trimestriel" },
+        { value: "SEMIANNUAL", label: "Semestriel" },
         { value: "BIWEEKLY", label: "Bimensuel" },
         { value: "MONTHLY", label: "Mensuel" },
         { value: "YEARLY", label: "Annuel" },
@@ -53,29 +57,38 @@ const BulletinConfig = () => {
         { value: "text", label: "Texte" }
     ]
 
-    // Données d'indicateurs simulées (comme dans l'image DHIS2)
-    const AVAILABLE_INDICATORS = [
-        { id: 'ind_001', name: 'CoD - Percentage of AIDS, 0 - 4' },
-        { id: 'ind_002', name: 'CoD - Percentage of AIDS, 15 - 49' },
-        { id: 'ind_003', name: 'CoD - Percentage of AIDS, 5 - 14' },
-        { id: 'ind_004', name: 'CoD - Percentage of AIDS, 50+' },
-        { id: 'ind_005', name: 'CoD - Percentage of Malaria deaths, 0-6 days' },
-        { id: 'ind_006', name: 'CoD - Percentage of Malaria deaths, 1 - 4 yrs' },
-        { id: 'ind_007', name: 'CoD - Percentage of Malaria deaths, 15+ yrs' },
-        { id: 'ind_008', name: 'CoD - Percentage of Malaria deaths, 28-365 days' },
-        { id: 'ind_009', name: 'CoD - Percentage of Malaria deaths, 5 - 14 yrs' },
-        { id: 'ind_010', name: 'CoD - Percentage of Malaria deaths, 7-27 days' },
-        { id: 'ind_011', name: 'CoD - Percentage of TB, AIDS (from all causes of death), 15-24' },
-        { id: 'ind_012', name: 'PEV - BCG Coverage' },
-        { id: 'ind_013', name: 'PEV - DPT3 Coverage' },
-        { id: 'ind_014', name: 'PEV - Measles Coverage' },
-        { id: 'ind_015', name: 'PEV - Polio Coverage' },
-        { id: 'ind_016', name: 'PEV - Yellow Fever Coverage' },
-        { id: 'ind_017', name: 'PNLT - TB Case Detection Rate' },
-        { id: 'ind_018', name: 'PNLT - TB Treatment Success Rate' },
-        { id: 'ind_019', name: 'PNN - Malnutrition Rate' },
-        { id: 'ind_020', name: 'PNLS - HIV Testing Rate' }
-    ]
+
+
+    const getPeriodDisplayText = () => {
+        if (!config.periodicity || !config.periodValue) return ''
+        
+        const { periodicity, periodValue } = config
+        
+        switch (periodicity) {
+            case 'WEEKLY':
+                return `Semaine ${periodValue.week} de ${periodValue.year}`
+            case 'MONTHLY':
+                const months = [
+                    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+                ]
+                return `${months[periodValue.month - 1]} ${periodValue.year}`
+            case 'QUARTERLY':
+                const quarters = [
+                    '1er Trimestre', '2ème Trimestre', '3ème Trimestre', '4ème Trimestre'
+                ]
+                return `${quarters[periodValue.quarter - 1]} ${periodValue.year}`
+            case 'YEARLY':
+                return `Année ${periodValue.year}`
+            case 'BIWEEKLY':
+                return `Période ${periodValue.biweek} (Semaines ${(periodValue.biweek - 1) * 2 + 1}-${periodValue.biweek * 2}) de ${periodValue.year}`
+            case 'SEMIANNUAL':
+                const semesters = ['1er Semestre', '2ème Semestre']
+                return `${semesters[periodValue.semester - 1]} ${periodValue.year}`
+            default:
+                return ''
+        }
+    }
 
     const handleSave = async () => {
         try {
@@ -191,11 +204,20 @@ const BulletinConfig = () => {
     }
 
     // Fonctions pour le sélecteur d'indicateurs
-    const openIndicatorSelector = (subsection, group) => {
-        setCurrentSubsection(subsection)
-        setCurrentIndicatorGroup(group)
-        setShowIndicatorSelector(true)
-        setIndicatorSearch('')
+    const openIndicatorSelector = (subsectionId, groupId) => {
+        // Trouver la sous-section et le groupe correspondants
+        const subsection = config.sections
+            .flatMap(section => section.subsections || [])
+            .find(sub => sub.id === subsectionId)
+        
+        const group = subsection?.indicatorGroups?.find(g => g.id === groupId)
+        
+        if (subsection && group) {
+            setCurrentSubsection(subsection)
+            setCurrentIndicatorGroup(group)
+            setShowIndicatorSelector(true)
+            setIndicatorSearch('')
+        }
     }
 
     const closeIndicatorSelector = () => {
@@ -211,12 +233,11 @@ const BulletinConfig = () => {
     }
 
     const getAvailableIndicators = () => {
-        const selectedIds = getSelectedIndicators().map(ind => ind.id)
-        return AVAILABLE_INDICATORS.filter(ind => 
-            !selectedIds.includes(ind.id) && 
-            ind.name.toLowerCase().includes(indicatorSearch.toLowerCase())
-        )
+        // Cette fonction sera gérée par BulletinIndicators
+        return []
     }
+
+
 
     const addIndicator = (indicator) => {
         if (!currentIndicatorGroup) return
@@ -455,12 +476,19 @@ const BulletinConfig = () => {
                         Configuration de base
                     </div>
                     
+                    {/* Programme de surveillance avec design amélioré */}
                     <div style={formGroupStyle}>
-                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px' }}>
+                        <label style={labelStyle}>Programme de surveillance</label>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'flex-end',
+                            gap: '12px',
+                            backgroundColor: '#f8fafc',
+                            padding: '16px',
+                            borderRadius: '8px',
+                            border: '1px solid #e2e8f0'
+                        }}>
                             <div style={{ flex: 1 }}>
-                                <label style={labelStyle}>Programme de surveillance</label>
-                                
-                                {/* Version alternative avec select HTML natif */}
                                 <select
                                     value={config.program}
                                     onChange={(e) => {
@@ -469,11 +497,20 @@ const BulletinConfig = () => {
                                     }}
                                     style={{
                                         width: '100%',
-                                        padding: '8px 12px',
+                                        padding: '12px 16px',
                                         border: '1px solid #d1d5db',
-                                        borderRadius: '6px',
+                                        borderRadius: '8px',
                                         fontSize: '14px',
-                                        backgroundColor: 'white'
+                                        backgroundColor: 'white',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.borderColor = '#3b82f6'
+                                        e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = '#d1d5db'
+                                        e.target.style.boxShadow = 'none'
                                     }}
                                 >
                                     <option value="">Sélectionner le programme...</option>
@@ -483,99 +520,573 @@ const BulletinConfig = () => {
                                         </option>
                                     ))}
                                 </select>
-                                
-                                {/* Debug: Afficher les options disponibles */}
-                                <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                                    Options disponibles: {PROGRAM_OPTIONS.length} programmes
-                                </div>
                             </div>
                             <Button
                                 secondary
                                 small
                                 icon={<Plus size={16} />}
                                 onClick={() => setShowNewProgramModal(true)}
-                                style={{ marginBottom: '4px' }}
+                                style={{ 
+                                    marginBottom: '0',
+                                    backgroundColor: '#f97316',
+                                    color: 'white',
+                                    borderColor: '#f97316'
+                                }}
                             >
                                 Nouveau
                             </Button>
                         </div>
                     </div>
 
+                    {/* Titre de la page de garde avec design amélioré */}
                     <div style={formGroupStyle}>
                         <label style={labelStyle}>Titre de la page de garde</label>
-                        <InputField
-                            value={config.coverTitle}
-                            onChange={({ value }) => setConfig({ ...config, coverTitle: value })}
-                            placeholder="Ex: Bulletin de surveillance PEV - Semaine 15, 2024"
-                        />
+                        <div style={{
+                            backgroundColor: '#f8fafc',
+                            padding: '16px',
+                            borderRadius: '8px',
+                            border: '1px solid #e2e8f0'
+                        }}>
+                            <InputField
+                                value={config.coverTitle}
+                                onChange={({ value }) => setConfig({ ...config, coverTitle: value })}
+                                placeholder="Ex: Bulletin de surveillance PEV - Semaine 15, 2024"
+                                style={{ border: 'none', backgroundColor: 'transparent' }}
+                            />
+                        </div>
                     </div>
 
+                    {/* Périodicité avec sélection de période relative */}
                     <div style={formGroupStyle}>
                         <label style={labelStyle}>Périodicité de génération</label>
                         
-                        {/* Version alternative avec select HTML natif */}
-                        <select
-                            value={config.periodicity}
-                            onChange={(e) => {
-                                console.log('Périodicité sélectionnée (HTML):', e.target.value)
-                                setConfig({ ...config, periodicity: e.target.value })
-                            }}
-                            style={{
-                                width: '100%',
-                                padding: '8px 12px',
-                                border: '1px solid #d1d5db',
-                                borderRadius: '6px',
-                                fontSize: '14px',
-                                backgroundColor: 'white'
-                            }}
-                        >
-                            <option value="">Sélectionner la périodicité...</option>
-                            {PERIOD_OPTIONS.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                        
-                        {/* Debug: Afficher les options disponibles */}
-                        <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                            Options disponibles: {PERIOD_OPTIONS.length} périodicités
+                        <div style={{
+                            backgroundColor: '#f8fafc',
+                            padding: '16px',
+                            borderRadius: '8px',
+                            border: '1px solid #e2e8f0'
+                        }}>
+                            <select
+                                value={config.periodicity}
+                                onChange={(e) => {
+                                    console.log('Périodicité sélectionnée (HTML):', e.target.value)
+                                    setConfig({ ...config, periodicity: e.target.value, periodValue: {} }) // Clear periodValue when periodicity changes
+                                }}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px 16px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    backgroundColor: 'white',
+                                    marginBottom: '12px',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                onFocus={(e) => {
+                                    e.target.style.borderColor = '#3b82f6'
+                                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                                }}
+                                onBlur={(e) => {
+                                    e.target.style.borderColor = '#d1d5db'
+                                    e.target.style.boxShadow = 'none'
+                                }}
+                            >
+                                <option value="">Sélectionner la périodicité...</option>
+                                {PERIOD_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+
+                            {/* Sélection de période relative selon la périodicité */}
+                            {config.periodicity && (
+                                <div style={{
+                                    backgroundColor: 'white',
+                                    padding: '16px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e2e8f0'
+                                }}>
+                                    <label style={{
+                                        ...labelStyle,
+                                        marginBottom: '12px',
+                                        color: '#1e293b',
+                                        fontWeight: '600'
+                                    }}>
+                                        Sélectionner la période
+                                    </label>
+                                    
+                                    {config.periodicity === 'WEEKLY' && (
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                            <div>
+                                                <label style={{ ...labelStyle, fontSize: '12px' }}>Année</label>
+                                                <select
+                                                    value={config.periodValue?.year || new Date().getFullYear()}
+                                                    onChange={(e) => setConfig({ 
+                                                        ...config, 
+                                                        periodValue: { 
+                                                            ...config.periodValue, 
+                                                            year: parseInt(e.target.value) 
+                                                        } 
+                                                    })}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 12px',
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '6px',
+                                                        fontSize: '14px',
+                                                        backgroundColor: 'white'
+                                                    }}
+                                                >
+                                                    {Array.from({ length: 5 }, (_, i) => {
+                                                        const year = new Date().getFullYear() - 2 + i
+                                                        return (
+                                                            <option key={year} value={year}>
+                                                                {year}
+                                                            </option>
+                                                        )
+                                                    })}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label style={{ ...labelStyle, fontSize: '12px' }}>Semaine</label>
+                                                <select
+                                                    value={config.periodValue?.week || 1}
+                                                    onChange={(e) => setConfig({ 
+                                                        ...config, 
+                                                        periodValue: { 
+                                                            ...config.periodValue, 
+                                                            week: parseInt(e.target.value) 
+                                                        } 
+                                                    })}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 12px',
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '6px',
+                                                        fontSize: '14px',
+                                                        backgroundColor: 'white'
+                                                    }}
+                                                >
+                                                    {Array.from({ length: 52 }, (_, i) => (
+                                                        <option key={i + 1} value={i + 1}>
+                                                            Semaine {i + 1}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {config.periodicity === 'MONTHLY' && (
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                            <div>
+                                                <label style={{ ...labelStyle, fontSize: '12px' }}>Année</label>
+                                                <select
+                                                    value={config.periodValue?.year || new Date().getFullYear()}
+                                                    onChange={(e) => setConfig({ 
+                                                        ...config, 
+                                                        periodValue: { 
+                                                            ...config.periodValue, 
+                                                            year: parseInt(e.target.value) 
+                                                        } 
+                                                    })}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 12px',
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '6px',
+                                                        fontSize: '14px',
+                                                        backgroundColor: 'white'
+                                                    }}
+                                                >
+                                                    {Array.from({ length: 5 }, (_, i) => {
+                                                        const year = new Date().getFullYear() - 2 + i
+                                                        return (
+                                                            <option key={year} value={year}>
+                                                                {year}
+                                                            </option>
+                                                        )
+                                                    })}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label style={{ ...labelStyle, fontSize: '12px' }}>Mois</label>
+                                                <select
+                                                    value={config.periodValue?.month || 1}
+                                                    onChange={(e) => setConfig({ 
+                                                        ...config, 
+                                                        periodValue: { 
+                                                            ...config.periodValue, 
+                                                            month: parseInt(e.target.value) 
+                                                        } 
+                                                    })}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 12px',
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '6px',
+                                                        fontSize: '14px',
+                                                        backgroundColor: 'white'
+                                                    }}
+                                                >
+                                                    {[
+                                                        { value: 1, label: 'Janvier' },
+                                                        { value: 2, label: 'Février' },
+                                                        { value: 3, label: 'Mars' },
+                                                        { value: 4, label: 'Avril' },
+                                                        { value: 5, label: 'Mai' },
+                                                        { value: 6, label: 'Juin' },
+                                                        { value: 7, label: 'Juillet' },
+                                                        { value: 8, label: 'Août' },
+                                                        { value: 9, label: 'Septembre' },
+                                                        { value: 10, label: 'Octobre' },
+                                                        { value: 11, label: 'Novembre' },
+                                                        { value: 12, label: 'Décembre' }
+                                                    ].map(month => (
+                                                        <option key={month.value} value={month.value}>
+                                                            {month.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {config.periodicity === 'QUARTERLY' && (
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                            <div>
+                                                <label style={{ ...labelStyle, fontSize: '12px' }}>Année</label>
+                                                <select
+                                                    value={config.periodValue?.year || new Date().getFullYear()}
+                                                    onChange={(e) => setConfig({ 
+                                                        ...config, 
+                                                        periodValue: { 
+                                                            ...config.periodValue, 
+                                                            year: parseInt(e.target.value) 
+                                                        } 
+                                                    })}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 12px',
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '6px',
+                                                        fontSize: '14px',
+                                                        backgroundColor: 'white'
+                                                    }}
+                                                >
+                                                    {Array.from({ length: 5 }, (_, i) => {
+                                                        const year = new Date().getFullYear() - 2 + i
+                                                        return (
+                                                            <option key={year} value={year}>
+                                                                {year}
+                                                            </option>
+                                                        )
+                                                    })}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label style={{ ...labelStyle, fontSize: '12px' }}>Trimestre</label>
+                                                <select
+                                                    value={config.periodValue?.quarter || 1}
+                                                    onChange={(e) => setConfig({ 
+                                                        ...config, 
+                                                        periodValue: { 
+                                                            ...config.periodValue, 
+                                                            quarter: parseInt(e.target.value) 
+                                                        } 
+                                                    })}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 12px',
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '6px',
+                                                        fontSize: '14px',
+                                                        backgroundColor: 'white'
+                                                    }}
+                                                >
+                                                    {[
+                                                        { value: 1, label: '1er Trimestre (Jan-Mar)' },
+                                                        { value: 2, label: '2ème Trimestre (Avr-Juin)' },
+                                                        { value: 3, label: '3ème Trimestre (Juil-Sep)' },
+                                                        { value: 4, label: '4ème Trimestre (Oct-Déc)' }
+                                                    ].map(quarter => (
+                                                        <option key={quarter.value} value={quarter.value}>
+                                                            {quarter.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {config.periodicity === 'YEARLY' && (
+                                        <div>
+                                            <label style={{ ...labelStyle, fontSize: '12px' }}>Année</label>
+                                            <select
+                                                value={config.periodValue?.year || new Date().getFullYear()}
+                                                onChange={(e) => setConfig({ 
+                                                    ...config, 
+                                                    periodValue: { 
+                                                        ...config.periodValue, 
+                                                        year: parseInt(e.target.value) 
+                                                    } 
+                                                })}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '8px 12px',
+                                                    border: '1px solid #d1d5db',
+                                                    borderRadius: '6px',
+                                                    fontSize: '14px',
+                                                    backgroundColor: 'white'
+                                                }}
+                                            >
+                                                {Array.from({ length: 5 }, (_, i) => {
+                                                    const year = new Date().getFullYear() - 2 + i
+                                                    return (
+                                                        <option key={year} value={year}>
+                                                            {year}
+                                                        </option>
+                                                    )
+                                                })}
+                                            </select>
+                                        </div>
+                                    )}
+
+                                    {config.periodicity === 'BIWEEKLY' && (
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                            <div>
+                                                <label style={{ ...labelStyle, fontSize: '12px' }}>Année</label>
+                                                <select
+                                                    value={config.periodValue?.year || new Date().getFullYear()}
+                                                    onChange={(e) => setConfig({ 
+                                                        ...config, 
+                                                        periodValue: { 
+                                                            ...config.periodValue, 
+                                                            year: parseInt(e.target.value) 
+                                                        } 
+                                                    })}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 12px',
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '6px',
+                                                        fontSize: '14px',
+                                                        backgroundColor: 'white'
+                                                    }}
+                                                >
+                                                    {Array.from({ length: 5 }, (_, i) => {
+                                                        const year = new Date().getFullYear() - 2 + i
+                                                        return (
+                                                            <option key={year} value={year}>
+                                                                {year}
+                                                            </option>
+                                                        )
+                                                    })}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label style={{ ...labelStyle, fontSize: '12px' }}>Période bimensuelle</label>
+                                                <select
+                                                    value={config.periodValue?.biweek || 1}
+                                                    onChange={(e) => setConfig({ 
+                                                        ...config, 
+                                                        periodValue: { 
+                                                            ...config.periodValue, 
+                                                            biweek: parseInt(e.target.value) 
+                                                        } 
+                                                    })}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 12px',
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '6px',
+                                                        fontSize: '14px',
+                                                        backgroundColor: 'white'
+                                                    }}
+                                                >
+                                                    {Array.from({ length: 26 }, (_, i) => (
+                                                        <option key={i + 1} value={i + 1}>
+                                                            Période {i + 1} (Semaines {(i * 2) + 1}-{(i + 1) * 2})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {config.periodicity === 'SEMIANNUAL' && (
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                            <div>
+                                                <label style={{ ...labelStyle, fontSize: '12px' }}>Année</label>
+                                                <select
+                                                    value={config.periodValue?.year || new Date().getFullYear()}
+                                                    onChange={(e) => setConfig({ 
+                                                        ...config, 
+                                                        periodValue: { 
+                                                            ...config.periodValue, 
+                                                            year: parseInt(e.target.value) 
+                                                        } 
+                                                    })}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 12px',
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '6px',
+                                                        fontSize: '14px',
+                                                        backgroundColor: 'white'
+                                                    }}
+                                                >
+                                                    {Array.from({ length: 5 }, (_, i) => {
+                                                        const year = new Date().getFullYear() - 2 + i
+                                                        return (
+                                                            <option key={year} value={year}>
+                                                                {year}
+                                                            </option>
+                                                        )
+                                                    })}
+                                                </select>
+                                            </div>
+        <div>
+                                                <label style={{ ...labelStyle, fontSize: '12px' }}>Semestre</label>
+                                                <select
+                                                    value={config.periodValue?.semester || 1}
+                                                    onChange={(e) => setConfig({ 
+                                                        ...config, 
+                                                        periodValue: { 
+                                                            ...config.periodValue, 
+                                                            semester: parseInt(e.target.value) 
+                                                        } 
+                                                    })}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 12px',
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '6px',
+                                                        fontSize: '14px',
+                                                        backgroundColor: 'white'
+                                                    }}
+                                                >
+                                                    {[
+                                                        { value: 1, label: '1er Semestre (Jan-Juin)' },
+                                                        { value: 2, label: '2ème Semestre (Juil-Déc)' }
+                                                    ].map(semester => (
+                                                        <option key={semester.value} value={semester.value}>
+                                                            {semester.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Affichage de la période sélectionnée */}
+                                    {config.periodValue && Object.keys(config.periodValue).length > 0 && (
+                                        <div style={{
+                                            marginTop: '12px',
+                                            padding: '12px',
+                                            backgroundColor: '#f0fdf4',
+                                            borderRadius: '6px',
+                                            border: '1px solid #bbf7d0'
+                                        }}>
+                                            <div style={{
+                                                fontSize: '14px',
+                                                color: '#166534',
+                                                fontWeight: '500',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px'
+                                            }}>
+                                                <Clock size={16} />
+                                                Période sélectionnée : {getPeriodDisplayText()}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    {/* Options d'automatisation déplacées ici */}
+                    {/* Options d'automatisation avec design amélioré */}
                     <div style={formGroupStyle}>
-                        <Checkbox
-                            label="Génération automatique des bulletins"
-                            checked={config.autoGenerate}
-                            onChange={({ checked }) => setConfig({ ...config, autoGenerate: checked })}
-                        />
-                    </div>
-                    
-                    {config.autoGenerate && (
                         <div style={{
-                            marginLeft: '24px',
-                            padding: '20px',
-                            backgroundColor: '#f0fdf4',
+                            backgroundColor: '#f8fafc',
+                            padding: '16px',
                             borderRadius: '8px',
-                            border: '1px solid #bbf7d0'
+                            border: '1px solid #e2e8f0'
                         }}>
-                            <p style={{ color: '#166534', marginBottom: '16px', fontWeight: '500' }}>
-                                Le bulletin sera généré automatiquement selon la fréquence sélectionnée.
-                            </p>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                                <div style={{ fontSize: '14px', color: '#15803d' }}>
-                                    <strong>• Hebdomadaire:</strong> chaque lundi à 8h00
+                            <Checkbox
+                                label="Génération automatique des bulletins"
+                                checked={config.autoGenerate}
+                                onChange={({ checked }) => setConfig({ ...config, autoGenerate: checked })}
+                            />
+                            
+                            {config.autoGenerate && (
+                                <div style={{
+                                    marginTop: '16px',
+                                    padding: '16px',
+                                    backgroundColor: '#f0fdf4',
+                                    borderRadius: '8px',
+                                    border: '1px solid #bbf7d0'
+                                }}>
+                                    <p style={{ color: '#166534', marginBottom: '16px', fontWeight: '500' }}>
+                                        Le bulletin sera généré automatiquement selon la fréquence sélectionnée.
+                                    </p>
+                                    <div style={{ 
+                                        display: 'grid', 
+                                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                                        gap: '12px' 
+                                    }}>
+                                        <div style={{ 
+                                            fontSize: '14px', 
+                                            color: '#15803d',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}>
+                                            <div style={{
+                                                width: '8px',
+                                                height: '8px',
+                                                backgroundColor: '#10b981',
+                                                borderRadius: '50%'
+                                            }}></div>
+                                            <strong>Hebdomadaire:</strong> chaque lundi à 8h00
+                                        </div>
+                                        <div style={{ 
+                                            fontSize: '14px', 
+                                            color: '#15803d',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}>
+                                            <div style={{
+                                                width: '8px',
+                                                height: '8px',
+                                                backgroundColor: '#10b981',
+                                                borderRadius: '50%'
+                                            }}></div>
+                                            <strong>Mensuel:</strong> le 1er de chaque mois à 8h00
+                                        </div>
+                                        <div style={{ 
+                                            fontSize: '14px', 
+                                            color: '#15803d',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}>
+                                            <div style={{
+                                                width: '8px',
+                                                height: '8px',
+                                                backgroundColor: '#10b981',
+                                                borderRadius: '50%'
+                                            }}></div>
+                                            <strong>Trimestriel:</strong> le 1er jour du trimestre à 8h00
+                                        </div>
+                                    </div>
                                 </div>
-                                <div style={{ fontSize: '14px', color: '#15803d' }}>
-                                    <strong>• Mensuel:</strong> le 1er de chaque mois à 8h00
-                                </div>
-                                <div style={{ fontSize: '14px', color: '#15803d' }}>
-                                    <strong>• Trimestriel:</strong> le 1er jour du trimestre à 8h00
-                                </div>
-                            </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 {/* Unités d'organisation (nouveau card) */}
@@ -587,35 +1098,35 @@ const BulletinConfig = () => {
                     
                     <BullOrgUnit config={config} setConfig={setConfig} />
                 </div>
-            </div>
 
-            {/* Rubriques & sous-rubriques */}
-            <div style={cardStyle}>
-                <div style={sectionHeaderStyle}>
-                    <BarChart3 size={24} color="#3b82f6" />
-                    Rubriques & sous-rubriques
-                </div>
-                
-                <div style={{ marginBottom: '16px' }}>
-                    <Button 
-                        secondary 
-                        onClick={addSection} 
-                        icon={<Plus size={16} />}
-                    >
-                        Ajouter une rubrique
-                    </Button>
-                </div>
+                {/* Rubriques & sous-rubriques */}
+                <div style={cardStyle}>
+                    <div style={sectionHeaderStyle}>
+                        <BarChart3 size={24} color="#3b82f6" />
+                        Rubriques & sous-rubriques
+                    </div>
+                    
+                    <div style={{ marginBottom: '16px' }}>
+                        <Button 
+                            secondary 
+                            onClick={addSection} 
+                            icon={<Plus size={16} />}
+                        >
+                            Ajouter une rubrique
+                        </Button>
+                    </div>
 
-                {(config.sections || []).map((section) => (
-                    <SectionEditor 
-                        key={section.id} 
-                        section={section} 
-                        onChange={(patch) => updateSection(section.id, patch)} 
-                        onRemove={() => removeSection(section.id)}
-                        presentations={PRESENTATIONS}
-                        onOpenIndicatorSelector={openIndicatorSelector}
-                    />
-                ))}
+                    {(config.sections || []).map((section) => (
+                        <SectionEditor 
+                            key={section.id} 
+                            section={section} 
+                            onChange={(patch) => updateSection(section.id, patch)} 
+                            onRemove={() => removeSection(section.id)}
+                            presentations={PRESENTATIONS}
+                            onOpenIndicatorSelector={openIndicatorSelector}
+                        />
+                    ))}
+                </div>
             </div>
 
             {/* Modal pour nouveau programme */}
@@ -647,16 +1158,13 @@ const BulletinConfig = () => {
 
             {/* Modal sélecteur d'indicateurs */}
             {showIndicatorSelector && (
-                <IndicatorSelector
+                <BulletinIndicators
                     onClose={closeIndicatorSelector}
-                    availableIndicators={getAvailableIndicators()}
                     selectedIndicators={getSelectedIndicators()}
                     onAddIndicator={addIndicator}
                     onRemoveIndicator={removeIndicator}
                     onAddAll={addAllIndicators}
                     onRemoveAll={removeAllIndicators}
-                    searchValue={indicatorSearch}
-                    onSearchChange={setIndicatorSearch}
                     groupName={currentIndicatorGroup?.name || 'Groupe d\'indicateurs'}
                 />
             )}
@@ -664,7 +1172,7 @@ const BulletinConfig = () => {
     )
 }
 
-// Composant SectionEditor optimisé
+// Composant SectionEditor défini en dehors pour éviter les problèmes de portée
 function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndicatorSelector }) {
     const update = (field, value) => {
         onChange({ ...section, [field]: value })
@@ -740,6 +1248,57 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
         updateSubsection(subsectionId, updatedSubsection)
     }
 
+    // Styles pour les éléments du SectionEditor
+    const inputStyle = {
+        padding: '8px 12px',
+        border: '1px solid #d1d5db',
+        borderRadius: '6px',
+        fontSize: '14px',
+        backgroundColor: 'white',
+        transition: 'all 0.2s ease'
+    }
+
+    const selectStyle = {
+        padding: '8px 12px',
+        border: '1px solid #d1d5db',
+        borderRadius: '6px',
+        fontSize: '14px',
+        backgroundColor: 'white',
+        transition: 'all 0.2s ease'
+    }
+
+    const indicatorGroupStyle = {
+        border: '1px solid #e2e8f0',
+        borderRadius: '8px',
+        padding: '16px',
+        marginBottom: '12px',
+        backgroundColor: '#f8fafc'
+    }
+
+    const indicatorButtonStyle = {
+        padding: '6px 12px',
+        border: '1px solid #d1d5db',
+        borderRadius: '4px',
+        backgroundColor: '#f8fafc',
+        color: '#374151',
+        fontSize: '12px',
+        fontWeight: '500',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease'
+    }
+
+    const badgeStyle = {
+        backgroundColor: '#dbeafe',
+        color: '#1e40af',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        fontWeight: '500',
+        display: 'inline-block',
+        margin: '2px'
+    }
+
+    // Styles pour les cartes (définis localement pour éviter les erreurs de portée)
     const sectionCardStyle = {
         backgroundColor: 'white',
         borderRadius: '8px',
@@ -757,467 +1316,141 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
         border: '1px solid #e2e8f0'
     }
 
-    const indicatorGroupStyle = {
-        backgroundColor: 'white',
-        borderRadius: '6px',
-        padding: '12px',
-        marginBottom: '8px',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-    }
-
-    const badgeStyle = {
-        backgroundColor: '#f1f5f9',
-        color: '#64748b',
-        padding: '4px 8px',
-        borderRadius: '4px',
-        fontSize: '12px',
-        fontWeight: '500'
-    }
-
-    const indicatorButtonStyle = {
-        backgroundColor: '#f97316',
-        color: 'white',
-        border: 'none',
-        padding: '6px 12px',
-        borderRadius: '4px',
-        fontSize: '12px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px'
-    }
-
-    const addGroupButtonStyle = {
-        backgroundColor: '#3b82f6',
-        color: 'white',
-        border: 'none',
-        padding: '6px 12px',
-        borderRadius: '4px',
-        fontSize: '12px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px'
-    }
-
-    const inputStyle = {
-        padding: '6px 10px',
-        border: '1px solid #d1d5db',
-        borderRadius: '4px',
-        fontSize: '14px',
-        width: '100%',
-        boxSizing: 'border-box'
-    }
-
     return (
         <div style={sectionCardStyle}>
-            <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                marginBottom: '16px'
-            }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={badgeStyle}>Rubrique</span>
-                    <InputField
+                    <input
+                        type="text"
                         value={section.title}
-                        onChange={({ value }) => update("title", value)}
-                        style={{ maxWidth: '300px' }}
+                        onChange={(e) => update('title', e.target.value)}
+                        placeholder="Nom de la rubrique"
+                        style={{ ...inputStyle, width: '300px' }}
                     />
+                    <select
+                        value={section.presentation}
+                        onChange={(e) => update('presentation', e.target.value)}
+                        style={{ ...selectStyle, width: '150px' }}
+                    >
+                        {presentations.map(p => (
+                            <option key={p.value} value={p.value}>{p.label}</option>
+                        ))}
+                    </select>
                 </div>
                 <Button 
-                    destructive 
                     small 
-                    icon={<Trash2 size={16} />} 
+                    destructive 
                     onClick={onRemove}
-                />
+                    icon={<Trash2 size={16} />}
+                >
+                    Supprimer
+                </Button>
             </div>
-            
-            <div style={{ marginTop: '16px' }}>
-                {(section.subsections || []).map((subsection) => (
-                    <div key={subsection.id} style={subsectionCardStyle}>
-                        <div style={{ 
-                            display: 'flex', 
-                            flexWrap: 'wrap', 
-                            alignItems: 'center', 
-                            gap: '12px',
-                            marginBottom: '16px'
-                        }}>
-                            <InputField
-                                value={subsection.title}
-                                onChange={({ value }) => updateSubsection(subsection.id, { title: value })}
-                                style={{ flex: 1, minWidth: '200px' }}
-                                placeholder="Titre de la sous-rubrique"
-                            />
-                            
-                            <select
-                                value={subsection.presentation}
-                                onChange={(e) => updateSubsection(subsection.id, { presentation: e.target.value })}
-                                style={{
-                                    minWidth: '120px',
-                                    padding: '8px 12px',
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '6px',
-                                    fontSize: '14px',
-                                    backgroundColor: 'white'
-                                }}
-                            >
-                                <option value="">Type de présentation</option>
-                                {presentations.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                            
-                            {/* Version DHIS2 SingleSelect (commentée pour test) */}
-                            {/*
-                            <SingleSelect
-                                selected={subsection.presentation}
-                                onChange={({ selected }) => updateSubsection(subsection.id, { presentation: selected })}
-                                options={presentations}
-                                style={{ minWidth: '120px' }}
-                            />
-                            */}
-                            
-                            <Button 
-                                destructive 
-                                small 
-                                icon={<Trash2 size={16} />} 
-                                onClick={() => removeSubsection(subsection.id)}
-                            />
-                        </div>
 
-                        {/* Groupes d'indicateurs */}
-                        <div style={{ marginTop: '12px' }}>
-                            <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'space-between',
-                                marginBottom: '12px'
-                            }}>
-                                <h4 style={{ 
-                                    fontSize: '14px', 
-                                    fontWeight: '600', 
-                                    color: '#374151',
-                                    margin: 0
-                                }}>
-                                    Groupes d'indicateurs
-                                </h4>
-                                <button
-                                    style={addGroupButtonStyle}
-                                    onClick={() => addIndicatorGroup(subsection.id)}
-                                >
-                                    <Plus size={12} />
-                                    Ajouter un groupe
-                                </button>
-                            </div>
-
-                            {(subsection.indicatorGroups || []).map((group) => (
-                                <div key={group.id} style={indicatorGroupStyle}>
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        gap: '12px',
-                                        marginBottom: '8px'
-                                    }}>
-                                        <InputField
-                                            value={group.name}
-                                            onChange={({ value }) => updateIndicatorGroup(subsection.id, group.id, { name: value })}
-                                            placeholder="Nom du groupe d'indicateurs"
-                                            style={{ flex: 1 }}
-                                        />
-                                        
-                                        {group.name.trim() && (
-                                            <button
-                                                style={indicatorButtonStyle}
-                                                onClick={() => onOpenIndicatorSelector(subsection, group)}
-                                            >
-                                                <Search size={12} />
-                                                Indicateurs ({group.selectedIndicators?.length || 0})
-                                            </button>
-                                        )}
-                                        
-                                        <Button 
-                                            destructive 
-                                            small 
-                                            icon={<Trash2 size={14} />} 
-                                            onClick={() => removeIndicatorGroup(subsection.id, group.id)}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-
-                            {(subsection.indicatorGroups || []).length === 0 && (
-                                <div style={{ 
-                                    textAlign: 'center', 
-                                    padding: '20px',
-                                    color: '#6b7280',
-                                    fontSize: '14px',
-                                    backgroundColor: '#f9fafb',
-                                    borderRadius: '6px',
-                                    border: '1px dashed #d1d5db'
-                                }}>
-                                    Aucun groupe d'indicateurs ajouté. 
-                                    <br />
-                                    Cliquez sur "Ajouter un groupe" pour commencer.
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                ))}
-                
+            <div style={{ marginBottom: '16px' }}>
                 <Button 
                     secondary 
+                    small 
                     onClick={addSubsection} 
                     icon={<Plus size={16} />}
-                    style={{ marginTop: '12px' }}
                 >
                     Ajouter une sous-rubrique
                 </Button>
             </div>
+
+            {(section.subsections || []).map((subsection) => (
+                <div key={subsection.id} style={subsectionCardStyle}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <input
+                                type="text"
+                                value={subsection.title}
+                                onChange={(e) => updateSubsection(subsection.id, { title: e.target.value })}
+                                placeholder="Nom de la sous-rubrique"
+                                style={{ ...inputStyle, width: '250px' }}
+                            />
+                            <select
+                                value={subsection.presentation}
+                                onChange={(e) => updateSubsection(subsection.id, { presentation: e.target.value })}
+                                style={{ ...selectStyle, width: '120px' }}
+                            >
+                                {presentations.map(p => (
+                                    <option key={p.value} value={p.value}>{p.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <Button 
+                            small 
+                            destructive 
+                            onClick={() => removeSubsection(subsection.id)}
+                            icon={<Trash2 size={16} />}
+                        >
+                            Supprimer
+                        </Button>
+                    </div>
+
+                    <div style={{ marginBottom: '12px' }}>
+                        <Button 
+                            secondary 
+                            small 
+                            onClick={() => addIndicatorGroup(subsection.id)} 
+                            icon={<Plus size={16} />}
+                        >
+                            Ajouter un groupe d'indicateurs
+                        </Button>
+                    </div>
+
+                    {(subsection.indicatorGroups || []).map((group) => (
+                        <div key={group.id} style={indicatorGroupStyle}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <input
+                                    type="text"
+                                    value={group.name}
+                                    onChange={(e) => updateIndicatorGroup(subsection.id, group.id, { name: e.target.value })}
+                                    placeholder="Nom du groupe d'indicateurs"
+                                    style={{ ...inputStyle, width: '200px' }}
+                                />
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                        onClick={() => onOpenIndicatorSelector(subsection.id, group.id)}
+                                        style={{
+                                            ...indicatorButtonStyle,
+                                            backgroundColor: group.name.trim() ? '#3b82f6' : '#9ca3af',
+                                            color: 'white',
+                                            borderColor: group.name.trim() ? '#3b82f6' : '#9ca3af'
+                                        }}
+                                        disabled={!group.name.trim()}
+                                    >
+                                        Indicateurs ({group.selectedIndicators?.length || 0})
+                                    </button>
+                                    <Button 
+                                        small 
+                                        destructive 
+                                        onClick={() => removeIndicatorGroup(subsection.id, group.id)}
+                                        icon={<Trash2 size={16} />}
+                                    >
+                                        Supprimer
+                                    </Button>
+                                </div>
+                            </div>
+                            
+                            {(group.selectedIndicators?.length || 0) > 0 && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                    {group.selectedIndicators?.map((indicator) => (
+                                        <span key={indicator.id} style={badgeStyle}>
+                                            {indicator.name}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            ))}
         </div>
     )
 }
 
-// Composant sélecteur d'indicateurs DHIS2
-function IndicatorSelector({ 
-    onClose, 
-    availableIndicators, 
-    selectedIndicators, 
-    onAddIndicator, 
-    onRemoveIndicator, 
-    onAddAll, 
-    onRemoveAll,
-    searchValue,
-    onSearchChange,
-    groupName
-}) {
-    const modalStyle = {
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '32px',
-        width: '90vw',
-        maxWidth: '1200px',
-        maxHeight: '80vh',
-        boxShadow: '0 20px 25px rgba(0,0,0,0.1)',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
-    }
 
-    const headerStyle = {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px',
-        paddingBottom: '16px',
-        borderBottom: '1px solid #e2e8f0'
-    }
-
-    const titleStyle = {
-        fontSize: '24px',
-        fontWeight: '600',
-        color: '#1e293b'
-    }
-
-    const subtitleStyle = {
-        fontSize: '14px',
-        color: '#6b7280',
-        marginTop: '4px'
-    }
-
-    const searchStyle = {
-        padding: '12px 16px',
-        border: '1px solid #d1d5db',
-        borderRadius: '8px',
-        fontSize: '14px',
-        width: '100%',
-        marginBottom: '16px',
-        boxSizing: 'border-box'
-    }
-
-    const containerStyle = {
-        display: 'grid',
-        gridTemplateColumns: '1fr auto 1fr',
-        gap: '16px',
-        flex: 1,
-        minHeight: '400px'
-    }
-
-    const panelStyle = {
-        border: '1px solid #e2e8f0',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
-    }
-
-    const panelHeaderStyle = {
-        backgroundColor: '#f8fafc',
-        padding: '12px 16px',
-        borderBottom: '1px solid #e2e8f0',
-        fontWeight: '500',
-        color: '#374151'
-    }
-
-    const listStyle = {
-        flex: 1,
-        overflowY: 'auto',
-        maxHeight: '300px'
-    }
-
-    const itemStyle = {
-        padding: '8px 16px',
-        borderBottom: '1px solid #f1f5f9',
-        cursor: 'pointer',
-        fontSize: '14px',
-        color: '#374151'
-    }
-
-    const itemHoverStyle = {
-        backgroundColor: '#f8fafc'
-    }
-
-    const buttonContainerStyle = {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        justifyContent: 'center',
-        padding: '0 8px'
-    }
-
-    const actionButtonStyle = {
-        padding: '8px 12px',
-        border: '1px solid #d1d5db',
-        borderRadius: '4px',
-        backgroundColor: '#f8fafc',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px',
-        fontSize: '12px'
-    }
-
-    const addAllButtonStyle = {
-        ...actionButtonStyle,
-        backgroundColor: '#f97316',
-        color: 'white',
-        borderColor: '#f97316'
-    }
-
-    const removeAllButtonStyle = {
-        ...actionButtonStyle,
-        backgroundColor: '#ef4444',
-        color: 'white',
-        borderColor: '#ef4444'
-    }
-
-    const footerStyle = {
-        display: 'flex',
-        justifyContent: 'flex-end',
-        gap: '12px',
-        marginTop: '24px',
-        paddingTop: '16px',
-        borderTop: '1px solid #e2e8f0'
-    }
-
-    return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            backdropFilter: 'blur(4px)'
-        }} onClick={onClose}>
-            <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
-                <div style={headerStyle}>
-                    <div>
-                        <h2 style={titleStyle}>Indicateurs</h2>
-                        <p style={subtitleStyle}>Groupe : {groupName}</p>
-                    </div>
-                    <Button onClick={onClose} secondary>Fermer</Button>
-                </div>
-
-                <input
-                    type="text"
-                    placeholder="Rechercher les items disponibles / sélectionnés"
-                    value={searchValue}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    style={searchStyle}
-                />
-
-                <div style={containerStyle}>
-                    {/* Panel gauche - Indicateurs disponibles */}
-                    <div style={panelStyle}>
-                        <div style={panelHeaderStyle}>
-                            Indicateurs disponibles ({availableIndicators.length})
-                        </div>
-                        <div style={listStyle}>
-                            {availableIndicators.map((indicator) => (
-                                <div
-                                    key={indicator.id}
-                                    style={itemStyle}
-                                    onMouseEnter={(e) => e.target.style.backgroundColor = itemHoverStyle.backgroundColor}
-                                    onMouseLeave={(e) => e.target.style.backgroundColor = ''}
-                                    onClick={() => onAddIndicator(indicator)}
-                                >
-                                    {indicator.name}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Boutons d'action */}
-                    <div style={buttonContainerStyle}>
-                        <button style={actionButtonStyle} onClick={() => {}}>
-                            <ChevronRight size={16} />
-                        </button>
-                        <button style={actionButtonStyle} onClick={() => {}}>
-                            <ChevronLeft size={16} />
-                        </button>
-                    </div>
-
-                    {/* Panel droit - Indicateurs sélectionnés */}
-                    <div style={panelStyle}>
-                        <div style={panelHeaderStyle}>
-                            Indicateurs sélectionnés ({selectedIndicators.length})
-                        </div>
-                        <div style={listStyle}>
-                            {selectedIndicators.map((indicator) => (
-                                <div
-                                    key={indicator.id}
-                                    style={itemStyle}
-                                    onMouseEnter={(e) => e.target.style.backgroundColor = itemHoverStyle.backgroundColor}
-                                    onMouseLeave={(e) => e.target.style.backgroundColor = ''}
-                                    onClick={() => onRemoveIndicator(indicator)}
-                                >
-                                    {indicator.name}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Boutons d'action en bas */}
-                <div style={footerStyle}>
-                    <button style={addAllButtonStyle} onClick={onAddAll}>
-                        ASSIGNER TOUT {availableIndicators.length} →
-                    </button>
-                    <button style={removeAllButtonStyle} onClick={onRemoveAll}>
-                        ← SUPPRIMER TOUT
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
-}
 
 export default BulletinConfig

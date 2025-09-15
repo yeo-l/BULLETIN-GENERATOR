@@ -365,11 +365,8 @@ const BullOrgUnit = ({ config, setConfig }) => {
             
             return (
                 <div key={unit.id} style={orgUnitItemStyle}>
-                    <div style={{
-                        ...orgUnitHeaderStyle,
-                        justifyContent: 'space-between'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={orgUnitHeaderStyle}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
                             <input
                                 type="checkbox"
                                 checked={selectionState === 'selected'}
@@ -380,72 +377,100 @@ const BullOrgUnit = ({ config, setConfig }) => {
                                 }}
                                 onChange={(e) => toggleOrgUnit(unit.id, e.target.checked)}
                                 style={{ 
-                                    margin: '0 8px 0 0',
-                                    accentColor: selectionState === 'partial' ? '#f97316' : undefined
+                                    accentColor: selectionState === 'partial' ? '#f97316' : undefined,
+                                    margin: 0
                                 }}
                             />
                             {hasChildren && (
                                 <span 
-                                    style={{ cursor: 'pointer' }} 
+                                    style={{ 
+                                        cursor: 'pointer',
+                                        color: '#6b7280',
+                                        fontSize: '12px',
+                                        width: '16px',
+                                        textAlign: 'center'
+                                    }}
                                     onClick={() => toggleOrgUnitExpansion(unit.id)}
                                 >
                                     {expandedOrgUnits.includes(unit.id) ? '▼' : '▶'}
                                 </span>
                             )}
                             <span style={{ 
-                                marginLeft: hasChildren ? '8px' : '0', 
-                                fontWeight: level === 0 ? '500' : 'normal',
-                                fontSize: level === 0 ? '14px' : '13px',
-                                color: selectionState === 'partial' ? '#f97316' : 
-                                       selectionState === 'selected' ? '#059669' : '#374151'
+                                fontSize: '14px', 
+                                color: '#374151', 
+                                fontWeight: selectionState === 'partial' ? '500' : selectionState === 'selected' ? '600' : '400',
+                                flex: 1
                             }}>
                                 {unit.name} {hasChildren && `(${unit.children.length})`}
                             </span>
                         </div>
                         
-                        {/* Boutons de sélection des enfants pour les unités parent */}
+                        {/* Boutons de sélection des enfants sur la même ligne */}
                         {hasChildren && (
-                            <div style={{ display: 'flex', gap: '4px' }}>
+                            <div style={{ 
+                                display: 'flex', 
+                                gap: '6px', 
+                                alignItems: 'center',
+                                marginLeft: '16px'
+                            }}>
                                 <button
                                     onClick={() => selectAllChildren(unit.id)}
                                     style={{
                                         padding: '4px 8px',
-                                        border: '1px solid #d1d5db',
-                                        borderRadius: '3px',
-                                        backgroundColor: '#f0fdf4',
+                                        border: '1px solid #10b981',
+                                        borderRadius: '4px',
+                                        backgroundColor: '#ecfdf5',
                                         color: '#059669',
-                                        fontSize: '10px',
+                                        fontSize: '11px',
                                         fontWeight: '500',
                                         cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
                                         whiteSpace: 'nowrap'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.backgroundColor = '#d1fae5'
+                                        e.target.style.borderColor = '#059669'
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.backgroundColor = '#ecfdf5'
+                                        e.target.style.borderColor = '#10b981'
                                     }}
                                     title="Sélectionner tous les enfants"
                                 >
-                                    Sélectionner enfants
+                                    ✓ Enfants
                                 </button>
                                 <button
                                     onClick={() => deselectAllChildren(unit.id)}
                                     style={{
                                         padding: '4px 8px',
-                                        border: '1px solid #d1d5db',
-                                        borderRadius: '3px',
+                                        border: '1px solid #ef4444',
+                                        borderRadius: '4px',
                                         backgroundColor: '#fef2f2',
                                         color: '#dc2626',
-                                        fontSize: '10px',
+                                        fontSize: '11px',
                                         fontWeight: '500',
                                         cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
                                         whiteSpace: 'nowrap'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.backgroundColor = '#fee2e2'
+                                        e.target.style.borderColor = '#dc2626'
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.backgroundColor = '#fef2f2'
+                                        e.target.style.borderColor = '#ef4444'
                                     }}
                                     title="Désélectionner tous les enfants"
                                 >
-                                    Désélectionner enfants
+                                    ✗ Enfants
                                 </button>
                             </div>
                         )}
                     </div>
-                    
+
                     {hasChildren && expandedOrgUnits.includes(unit.id) && (
-                        <div style={{ marginLeft: '24px' }}>
+                        <div style={{ marginLeft: '24px', marginTop: '8px' }}>
                             <OrgUnitTree units={unit.children} level={level + 1} />
                         </div>
                     )}
@@ -456,14 +481,18 @@ const BullOrgUnit = ({ config, setConfig }) => {
 
     // Styles pour la section d'unités d'organisation
     const orgUnitItemStyle = {
-        marginBottom: '4px',
-        padding: '8px 0',
-        borderBottom: '1px dashed #e2e8f0'
+        marginBottom: '6px',
+        padding: '8px 12px',
+        borderBottom: '1px solid #f1f5f9',
+        backgroundColor: '#ffffff',
+        borderRadius: '6px',
+        transition: 'all 0.2s ease'
     }
 
     const orgUnitHeaderStyle = {
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
         gap: '8px',
         cursor: 'pointer',
         padding: '4px 0'
@@ -488,81 +517,105 @@ const BullOrgUnit = ({ config, setConfig }) => {
                 
                 {/* Interface de sélection des unités d'organisation */}
                 <div style={{
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
                     overflow: 'hidden',
-                    backgroundColor: 'white'
+                    backgroundColor: 'white',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
                 }}>
                     {/* Header avec titre et compteur */}
                     <div style={{
-                        backgroundColor: '#f8fafc',
-                        padding: '12px 16px',
-                        borderBottom: '1px solid #e2e8f0',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '12px'
+                        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                        padding: '16px 20px',
+                        borderBottom: '1px solid #e2e8f0'
                     }}>
                         <div style={{
                             display: 'flex',
                             justifyContent: 'space-between',
-                            alignItems: 'center'
+                            alignItems: 'center',
+                            marginBottom: '16px'
                         }}>
                             <div>
                                 <h4 style={{ 
-                                    fontSize: '14px', 
+                                    fontSize: '16px', 
                                     fontWeight: '600', 
-                                    color: '#374151',
-                                    margin: 0
+                                    color: '#1e293b',
+                                    margin: 0,
+                                    marginBottom: '4px'
                                 }}>
                                     Filtrage des unités d'organisation par nom
                                 </h4>
                                 <p style={{ 
-                                    fontSize: '12px', 
-                                    color: '#6b7280',
-                                    margin: '4px 0 0 0'
+                                    fontSize: '13px', 
+                                    color: '#64748b',
+                                    margin: 0
                                 }}>
                                     {config.selectedOrgUnits?.length || 0} Unité(s) d'organisation sélectionnée(s)
                                 </p>
                             </div>
-                            <div style={{ display: 'flex', gap: '8px' }}>
+                            <div style={{ display: 'flex', gap: '10px' }}>
                                 <button
                                     onClick={() => selectAllOrgUnits()}
                                     style={{
-                                        padding: '6px 12px',
-                                        border: '1px solid #d1d5db',
-                                        borderRadius: '4px',
-                                        backgroundColor: '#f8fafc',
-                                        color: '#374151',
+                                        padding: '8px 16px',
+                                        border: '1px solid #10b981',
+                                        borderRadius: '6px',
+                                        backgroundColor: '#ecfdf5',
+                                        color: '#059669',
                                         fontSize: '12px',
-                                        fontWeight: '500',
-                                        cursor: 'pointer'
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.backgroundColor = '#d1fae5'
+                                        e.target.style.transform = 'translateY(-1px)'
+                                        e.target.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)'
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.backgroundColor = '#ecfdf5'
+                                        e.target.style.transform = 'translateY(0)'
+                                        e.target.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'
                                     }}
                                 >
-                                    SÉLECTIONNER TOUT
+                                    ✓ SÉLECTIONNER TOUT
                                 </button>
                                 <button
                                     onClick={() => deselectAllOrgUnits()}
                                     style={{
-                                        padding: '6px 12px',
-                                        border: '1px solid #d1d5db',
-                                        borderRadius: '4px',
-                                        backgroundColor: '#f8fafc',
-                                        color: '#374151',
+                                        padding: '8px 16px',
+                                        border: '1px solid #ef4444',
+                                        borderRadius: '6px',
+                                        backgroundColor: '#fef2f2',
+                                        color: '#dc2626',
                                         fontSize: '12px',
-                                        fontWeight: '500',
-                                        cursor: 'pointer'
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.backgroundColor = '#fee2e2'
+                                        e.target.style.transform = 'translateY(-1px)'
+                                        e.target.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)'
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.backgroundColor = '#fef2f2'
+                                        e.target.style.transform = 'translateY(0)'
+                                        e.target.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'
                                     }}
                                 >
-                                    DÉSÉLECTIONNER TOUT
+                                    ✗ DÉSÉLECTIONNER TOUT
                                 </button>
                             </div>
                         </div>
 
-                        {/* Barre de recherche */}
+                        {/* Barre de recherche améliorée */}
                         <div style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '8px'
+                            gap: '12px'
                         }}>
                             <div style={{
                                 position: 'relative',
@@ -575,19 +628,28 @@ const BullOrgUnit = ({ config, setConfig }) => {
                                     onChange={(e) => setOrgUnitSearchTerm(e.target.value)}
                                     style={{
                                         width: '100%',
-                                        padding: '8px 12px 8px 36px',
+                                        padding: '12px 16px 12px 44px',
                                         border: '1px solid #d1d5db',
-                                        borderRadius: '6px',
+                                        borderRadius: '8px',
                                         fontSize: '14px',
                                         backgroundColor: 'white',
-                                        boxSizing: 'border-box'
+                                        boxSizing: 'border-box',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.borderColor = '#3b82f6'
+                                        e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = '#d1d5db'
+                                        e.target.style.boxShadow = 'none'
                                     }}
                                 />
                                 <Search 
-                                    size={16} 
+                                    size={18} 
                                     style={{
                                         position: 'absolute',
-                                        left: '12px',
+                                        left: '16px',
                                         top: '50%',
                                         transform: 'translateY(-50%)',
                                         color: '#6b7280'
@@ -598,59 +660,88 @@ const BullOrgUnit = ({ config, setConfig }) => {
                                 <button
                                     onClick={() => setOrgUnitSearchTerm('')}
                                     style={{
-                                        padding: '8px',
+                                        padding: '10px',
                                         border: '1px solid #d1d5db',
-                                        borderRadius: '4px',
+                                        borderRadius: '8px',
                                         backgroundColor: '#f8fafc',
                                         color: '#6b7280',
                                         cursor: 'pointer',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        justifyContent: 'center'
+                                        justifyContent: 'center',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.backgroundColor = '#f1f5f9'
+                                        e.target.style.borderColor = '#9ca3af'
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.backgroundColor = '#f8fafc'
+                                        e.target.style.borderColor = '#d1d5db'
                                     }}
                                     title="Effacer la recherche"
                                 >
-                                    &times;
+                                    ✕
                                 </button>
                             )}
                         </div>
 
-                        {/* Indicateur de recherche */}
+                        {/* Indicateur de recherche amélioré */}
                         {orgUnitSearchTerm && (
                             <div style={{
-                                fontSize: '12px',
-                                color: '#6b7280',
+                                fontSize: '13px',
+                                color: '#64748b',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '8px'
+                                gap: '8px',
+                                marginTop: '8px',
+                                padding: '8px 12px',
+                                backgroundColor: '#f8fafc',
+                                borderRadius: '6px',
+                                border: '1px solid #e2e8f0'
                             }}>
-                                <span>
-                                    Recherche : &quot;{orgUnitSearchTerm}&quot;
+                                <span style={{ fontWeight: '500' }}>
+                                    🔍 Recherche : &quot;{orgUnitSearchTerm}&quot;
                                 </span>
-                                <span>
-                                    • {filteredOrgUnits.length} résultat(s) trouvé(s)
+                                <span style={{ 
+                                    backgroundColor: '#3b82f6', 
+                                    color: 'white', 
+                                    padding: '2px 8px', 
+                                    borderRadius: '12px',
+                                    fontSize: '11px',
+                                    fontWeight: '600'
+                                }}>
+                                    {filteredOrgUnits.length} résultat(s)
                                 </span>
                             </div>
                         )}
-
-
                     </div>
 
                     {/* Zone de contenu avec arborescence */}
                     <div style={{
-                        height: '300px',
+                        height: '350px',
                         overflow: 'auto',
-                        padding: '8px 0'
+                        padding: '16px 20px'
                     }}>
                         {loadingOrgUnits ? (
                             <div style={{
                                 display: 'flex',
+                                flexDirection: 'column',
                                 justifyContent: 'center',
                                 alignItems: 'center',
                                 height: '200px',
                                 color: '#6b7280',
                                 fontSize: '14px'
                             }}>
+                                <div style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    border: '3px solid #f3f4f6',
+                                    borderTop: '3px solid #3b82f6',
+                                    borderRadius: '50%',
+                                    animation: 'spin 1s linear infinite',
+                                    marginBottom: '16px'
+                                }}></div>
                                 Chargement des unités d'organisation...
                             </div>
                         ) : orgUnitsError ? (
@@ -665,7 +756,11 @@ const BullOrgUnit = ({ config, setConfig }) => {
                                 textAlign: 'center',
                                 padding: '20px'
                             }}>
-                                <div style={{ marginBottom: '12px' }}>
+                                <div style={{
+                                    fontSize: '48px',
+                                    marginBottom: '16px'
+                                }}>⚠️</div>
+                                <div style={{ marginBottom: '12px', fontWeight: '600' }}>
                                     Erreur lors du chargement des unités d'organisation
                                 </div>
                                 <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>
@@ -674,28 +769,42 @@ const BullOrgUnit = ({ config, setConfig }) => {
                                 <button
                                     onClick={loadOrganisationUnits}
                                     style={{
-                                        padding: '8px 16px',
+                                        padding: '10px 20px',
                                         border: '1px solid #d1d5db',
-                                        borderRadius: '4px',
+                                        borderRadius: '6px',
                                         backgroundColor: '#f8fafc',
                                         color: '#374151',
-                                        fontSize: '12px',
+                                        fontSize: '13px',
                                         fontWeight: '500',
-                                        cursor: 'pointer'
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.backgroundColor = '#f1f5f9'
+                                        e.target.style.borderColor = '#9ca3af'
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.backgroundColor = '#f8fafc'
+                                        e.target.style.borderColor = '#d1d5db'
                                     }}
                                 >
-                                    Réessayer
+                                    🔄 Réessayer
                                 </button>
                             </div>
                         ) : orgUnitsData.length === 0 ? (
                             <div style={{
                                 display: 'flex',
+                                flexDirection: 'column',
                                 justifyContent: 'center',
                                 alignItems: 'center',
                                 height: '200px',
                                 color: '#6b7280',
                                 fontSize: '14px'
                             }}>
+                                <div style={{
+                                    fontSize: '48px',
+                                    marginBottom: '16px'
+                                }}>📁</div>
                                 Aucune unité d'organisation trouvée
                             </div>
                         ) : (
@@ -705,20 +814,29 @@ const BullOrgUnit = ({ config, setConfig }) => {
                 </div>
             </div>
 
-            {/* Contrôles de niveau d'organisation */}
+            {/* Contrôles de niveau d'organisation améliorés */}
             <div style={formGroupStyle}>
                 <label style={labelStyle}>Niveau d'unité d'organisation</label>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                     <select
                         value={config.orgUnitLevel || ''}
                         onChange={(e) => setConfig({ ...config, orgUnitLevel: e.target.value })}
                         style={{
                             flex: 1,
-                            padding: '8px 12px',
+                            padding: '10px 16px',
                             border: '1px solid #d1d5db',
-                            borderRadius: '6px',
+                            borderRadius: '8px',
                             fontSize: '14px',
-                            backgroundColor: 'white'
+                            backgroundColor: 'white',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onFocus={(e) => {
+                            e.target.style.borderColor = '#3b82f6'
+                            e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                        }}
+                        onBlur={(e) => {
+                            e.target.style.borderColor = '#d1d5db'
+                            e.target.style.boxShadow = 'none'
                         }}
                     >
                         <option value="">Sélectionner le niveau...</option>
@@ -730,50 +848,79 @@ const BullOrgUnit = ({ config, setConfig }) => {
                     <button
                         onClick={() => selectByLevel(config.orgUnitLevel)}
                         style={{
-                            padding: '8px 12px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '4px',
-                            backgroundColor: '#f8fafc',
-                            color: '#374151',
-                            fontSize: '12px',
-                            fontWeight: '500',
-                            cursor: 'pointer'
+                            padding: '10px 20px',
+                            border: '1px solid #10b981',
+                            borderRadius: '8px',
+                            backgroundColor: '#ecfdf5',
+                            color: '#059669',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = '#d1fae5'
+                            e.target.style.transform = 'translateY(-1px)'
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = '#ecfdf5'
+                            e.target.style.transform = 'translateY(0)'
                         }}
                     >
-                        SÉLECTIONNER
+                        ✓ SÉLECTIONNER
                     </button>
                     <button
                         onClick={() => deselectByLevel(config.orgUnitLevel)}
                         style={{
-                            padding: '8px 12px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '4px',
-                            backgroundColor: '#f8fafc',
-                            color: '#374151',
-                            fontSize: '12px',
-                            fontWeight: '500',
-                            cursor: 'pointer'
+                            padding: '10px 20px',
+                            border: '1px solid #ef4444',
+                            borderRadius: '8px',
+                            backgroundColor: '#fef2f2',
+                            color: '#dc2626',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = '#fee2e2'
+                            e.target.style.transform = 'translateY(-1px)'
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = '#fef2f2'
+                            e.target.style.transform = 'translateY(0)'
                         }}
                     >
-                        DÉSÉLECTIONNER
+                        ✗ DÉSÉLECTIONNER
                     </button>
                 </div>
             </div>
 
-            {/* Groupe d'unités d'organisation */}
+            {/* Groupe d'unités d'organisation amélioré */}
             <div style={formGroupStyle}>
                 <label style={labelStyle}>Groupe d'Unités d'Organisation</label>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                     <select
                         value={config.orgUnitGroup || ''}
                         onChange={(e) => setConfig({ ...config, orgUnitGroup: e.target.value })}
                         style={{
                             flex: 1,
-                            padding: '8px 12px',
+                            padding: '10px 16px',
                             border: '1px solid #d1d5db',
-                            borderRadius: '6px',
+                            borderRadius: '8px',
                             fontSize: '14px',
-                            backgroundColor: 'white'
+                            backgroundColor: 'white',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onFocus={(e) => {
+                            e.target.style.borderColor = '#3b82f6'
+                            e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                        }}
+                        onBlur={(e) => {
+                            e.target.style.borderColor = '#d1d5db'
+                            e.target.style.boxShadow = 'none'
                         }}
                     >
                         <option value="">Sélectionner le groupe...</option>
@@ -785,32 +932,52 @@ const BullOrgUnit = ({ config, setConfig }) => {
                     <button
                         onClick={() => selectByGroup(config.orgUnitGroup)}
                         style={{
-                            padding: '8px 12px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '4px',
-                            backgroundColor: '#f8fafc',
-                            color: '#374151',
-                            fontSize: '12px',
-                            fontWeight: '500',
-                            cursor: 'pointer'
+                            padding: '10px 20px',
+                            border: '1px solid #10b981',
+                            borderRadius: '8px',
+                            backgroundColor: '#ecfdf5',
+                            color: '#059669',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = '#d1fae5'
+                            e.target.style.transform = 'translateY(-1px)'
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = '#ecfdf5'
+                            e.target.style.transform = 'translateY(0)'
                         }}
                     >
-                        SÉLECTIONNER
+                        ✓ SÉLECTIONNER
                     </button>
                     <button
                         onClick={() => deselectByGroup(config.orgUnitGroup)}
                         style={{
-                            padding: '8px 12px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '4px',
-                            backgroundColor: '#f8fafc',
-                            color: '#374151',
-                            fontSize: '12px',
-                            fontWeight: '500',
-                            cursor: 'pointer'
+                            padding: '10px 20px',
+                            border: '1px solid #ef4444',
+                            borderRadius: '8px',
+                            backgroundColor: '#fef2f2',
+                            color: '#dc2626',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = '#fee2e2'
+                            e.target.style.transform = 'translateY(-1px)'
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = '#fef2f2'
+                            e.target.style.transform = 'translateY(0)'
                         }}
                     >
-                        DÉSÉLECTIONNER
+                        ✗ DÉSÉLECTIONNER
                     </button>
                 </div>
             </div>

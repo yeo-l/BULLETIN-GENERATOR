@@ -1,0 +1,26 @@
+{
+  "name": "Bulletin Generator",
+  "short_name": "BulletinGen",
+  "description": "Module de génération de bulletins sanitaires pour DHIS2",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "32x32",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["health", "productivity", "utilities"],
+  "lang": "fr",
+  "dir": "ltr"
+}

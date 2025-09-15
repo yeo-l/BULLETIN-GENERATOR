@@ -29,12 +29,12 @@ const BulletinHistory = () => {
 
     // Données de test pour les programmes
     const PROGRAM_OPTIONS = [
-        { value: "PEV", label: "Programme élargie de vaccination" },
-        { value: "PNLT", label: "Programme national de lutte contre la tuberculose" },
-        { value: "PNN", label: "Programme national de nutrition" },
-        { value: "PNLS", label: "Programme national de lutte contre le SIDA" },
-        { value: "INHP", label: "Programme national de l'hygiène publique" },
-        { value: "PNSME", label: "Programme national de santé mère et enfant" },
+        { value: "PEV", label: "PEV" },
+        { value: "PNLT", label: "PNLT" },
+        { value: "PNN", label: "PNN" },
+        { value: "PNLS", label: "PNLS" },
+        { value: "INHP", label: "INHP" },
+        { value: "PNSME", label: "PNSME" },
     ]
 
     // Fonction pour charger les configurations depuis le datastore
@@ -159,6 +159,8 @@ const BulletinHistory = () => {
         setShowConfigDetails(true)
     }
 
+    const filteredConfigurations = getFilteredAndSortedConfigurations()
+
     // Styles
     const containerStyle = {
         maxWidth: '1400px',
@@ -232,8 +234,6 @@ const BulletinHistory = () => {
         gap: '6px',
         transition: 'all 0.2s ease'
     }
-
-    const filteredConfigurations = getFilteredAndSortedConfigurations()
 
     return (
         <div style={containerStyle}>
@@ -530,9 +530,6 @@ const BulletinHistory = () => {
                                     </div>
                                     
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
-                                        <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                                            <strong>Clé:</strong> {config.key}
-                                        </div>
                                         <div style={{ fontSize: '14px', color: '#6b7280' }}>
                                             <strong>Périodicité:</strong> {config.periodicity || 'Non définie'}
                                         </div>
