@@ -4,6 +4,7 @@ import {
   Settings,
   History,
   FileText,
+  Upload,
 } from "lucide-react";
 import i18n from "../locales";
 import Logo from "./Logo";
@@ -13,6 +14,8 @@ const menus = [
   { id: 'generate', label: i18n.t("Générer Bulletin"), icon: FileText },
   { id: 'history', label: i18n.t("Historique"), icon: History },
   { id: 'config', label: i18n.t("Paramétrage"), icon: Settings },
+  { id: 'import', label: i18n.t("Importer Documents"), icon: Upload },
+  
 ];
 
 export default function Sidebar({ onSelect }) {

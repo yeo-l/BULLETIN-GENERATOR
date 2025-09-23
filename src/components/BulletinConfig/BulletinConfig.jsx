@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Button, Card, InputField, Checkbox, SingleSelect, MultiSelect, NoticeBox } from '@dhis2/ui'
-import { Save, Plus, Settings, BarChart3, Clock, Trash2, ChevronRight, ChevronLeft, Search } from 'lucide-react'
+import { Save, Plus, Settings, BarChart3, Clock, Trash2, ChevronRight, ChevronLeft, Search, Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react'
 import BullOrgUnit from './BullOrgUnit'
 import BulletinIndicators from './BulletinIndicators'
 
@@ -296,6 +296,7 @@ const BulletinConfig = () => {
             .find(group => group.id === currentIndicatorGroup.id)
         setCurrentIndicatorGroup(updatedGroup)
     }
+
     
     const templates = [
         { value: 'standard', label: 'Standard' },
@@ -468,7 +469,7 @@ const BulletinConfig = () => {
                 </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '32px' }}>
                 {/* Configuration de base */}
                 <div style={cardStyle}>
                     <div style={sectionHeaderStyle}>
@@ -1098,24 +1099,30 @@ const BulletinConfig = () => {
                     
                     <BullOrgUnit config={config} setConfig={setConfig} />
                 </div>
+            </div>
 
-                {/* Rubriques & sous-rubriques */}
-                <div style={cardStyle}>
-                    <div style={sectionHeaderStyle}>
-                        <BarChart3 size={24} color="#3b82f6" />
-                        Rubriques & sous-rubriques
-                    </div>
-                    
-                    <div style={{ marginBottom: '16px' }}>
-                        <Button 
-                            secondary 
-                            onClick={addSection} 
-                            icon={<Plus size={16} />}
-                        >
-                            Ajouter une rubrique
-                        </Button>
-                    </div>
+            {/* Rubriques & sous-rubriques - Prend toute la largeur */}
+            <div style={{...cardStyle, marginBottom: '32px'}}>
+                <div style={sectionHeaderStyle}>
+                    <BarChart3 size={24} color="#3b82f6" />
+                    Rubriques & sous-rubriques
+                </div>
+                
+                <div style={{ marginBottom: '24px' }}>
+                    <Button 
+                        secondary 
+                        onClick={addSection} 
+                        icon={<Plus size={16} />}
+                    >
+                        Ajouter une rubrique
+                    </Button>
+                </div>
 
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(600px, 1fr))', 
+                    gap: '24px' 
+                }}>
                     {(config.sections || []).map((section) => (
                         <SectionEditor 
                             key={section.id} 
@@ -1168,6 +1175,7 @@ const BulletinConfig = () => {
                     groupName={currentIndicatorGroup?.name || 'Groupe d\'indicateurs'}
                 />
             )}
+
         </div>
     )
 }
@@ -1324,18 +1332,9 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
                         type="text"
                         value={section.title}
                         onChange={(e) => update('title', e.target.value)}
-                        placeholder="Nom de la rubrique"
-                        style={{ ...inputStyle, width: '300px' }}
+                        placeholder=" "
+                        style={{ ...inputStyle, width: '400px' }}
                     />
-                    <select
-                        value={section.presentation}
-                        onChange={(e) => update('presentation', e.target.value)}
-                        style={{ ...selectStyle, width: '150px' }}
-                    >
-                        {presentations.map(p => (
-                            <option key={p.value} value={p.value}>{p.label}</option>
-                        ))}
-                    </select>
                 </div>
                 <Button 
                     small 
@@ -1366,7 +1365,7 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
                                 type="text"
                                 value={subsection.title}
                                 onChange={(e) => updateSubsection(subsection.id, { title: e.target.value })}
-                                placeholder="Nom de la sous-rubrique"
+                                placeholder=" "
                                 style={{ ...inputStyle, width: '250px' }}
                             />
                             <select

@@ -7,6 +7,7 @@ import Sidebar from './components/Sidebar'
 import BulletinConfig from './components/BulletinConfig/BulletinConfig'
 import BulletinHistory from './components/BulletinHistory/BulletinHistory'
 import BulletinGenerator from './components/BulletinGenerator/BulletinGenerator'
+import DocumentImport from './components/DocumentImport/DocumentImport'
 import Logo from './components/Logo'
 // './locales' will be populated after running start or build scripts
 import './locales'
@@ -65,6 +66,7 @@ const MyApp = () => {
                     if (componentName === 'config') setActiveContent(<BulletinConfig />)
                     else if (componentName === 'history') setActiveContent(<BulletinHistory />)
                     else if (componentName === 'generate') setActiveContent(<BulletinGenerator />)
+                    else if (componentName === 'import') setActiveContent(<DocumentImport />)
                     else setActiveContent(null)
                 }} />
                 <main style={{ flex: 1, padding: '16px' }}>
