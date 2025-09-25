@@ -4,7 +4,7 @@ import { Save, Plus, Settings, BarChart3, Clock, Trash2, ChevronRight, ChevronLe
 import BullOrgUnit from './BullOrgUnit'
 import BulletinIndicators from './BulletinIndicators'
 
-const BulletinConfig = () => {
+const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
     const [config, setConfig] = useState({
         name: '',
         diseases: [],
@@ -28,6 +28,34 @@ const BulletinConfig = () => {
     const [currentSubsection, setCurrentSubsection] = useState(null)
     const [currentIndicatorGroup, setCurrentIndicatorGroup] = useState(null)
     const [indicatorSearch, setIndicatorSearch] = useState('')
+
+    // Charger les données de configuration à modifier
+    useEffect(() => {
+        if (configToEdit) {
+            console.log('Chargement de la configuration à modifier:', configToEdit)
+            setConfig({
+                name: configToEdit.name || '',
+                diseases: configToEdit.diseases || [],
+                period: configToEdit.period || '',
+                template: configToEdit.template || '',
+                indicators: configToEdit.indicators || [],
+                favorites: configToEdit.favorites || [],
+                orgUnits: configToEdit.orgUnits || [],
+                autoGenerate: configToEdit.autoGenerate || false,
+                program: configToEdit.program || '',
+                coverTitle: configToEdit.coverTitle || '',
+                periodicity: configToEdit.periodicity || '',
+                sections: configToEdit.sections || [],
+                selectedOrgUnits: configToEdit.selectedOrgUnits || [],
+                periodValue: configToEdit.periodValue || {},
+                key: configToEdit.key || null // Conserver la clé pour la mise à jour
+            })
+            setSaveStatus({
+                type: 'info',
+                message: `Configuration "${configToEdit.coverTitle || configToEdit.name}" chargée pour modification`
+            })
+        }
+    }, [configToEdit])
 
     // Données de test - Options de programmes
     const PROGRAM_OPTIONS = [
@@ -94,36 +122,39 @@ const BulletinConfig = () => {
         try {
             console.log('Sauvegarde de la configuration:', config)
             
-            // Générer une clé unique basée sur le programme et la date/heure actuelle
-            const now = new Date()
-            const dateStr = now.toLocaleDateString('fr-FR', { 
-                day: '2-digit', 
-                month: '2-digit', 
-                year: '2-digit' 
-            }).replace(/\//g, '-')
-            const timeStr = now.toLocaleTimeString('fr-FR', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            }).replace(/:/g, '')
+            // Déterminer si c'est une création ou une mise à jour
+            const isUpdate = config.key && configToEdit
             
-            const programKey = config.program || 'DEFAULT'
-            const uniqueKey = `${programKey}${dateStr}${timeStr}`
+            let uniqueKey = config.key
             
-            console.log('Clé unique générée:', uniqueKey)
+            if (!isUpdate) {
+                // Générer une clé unique basée sur le programme et la date/heure actuelle
+                const now = new Date()
+                const dateStr = now.toLocaleDateString('fr-FR', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: '2-digit' 
+                }).replace(/\//g, '-')
+                const timeStr = now.toLocaleTimeString('fr-FR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                }).replace(/:/g, '')
+                
+                const programKey = config.program || 'DEFAULT'
+                uniqueKey = `${programKey}${dateStr}${timeStr}`
+            }
+            
+            console.log('Clé utilisée:', uniqueKey, isUpdate ? '(mise à jour)' : '(création)')
             
             // Préparer les données à sauvegarder
+            const now = new Date()
             const bulletinConfig = {
-                id: uniqueKey,
-                name: `Configuration ${programKey} - ${dateStr} ${timeStr}`,
-                description: 'Configuration pour la génération automatique des bulletins de santé',
-                data: {
-                    ...config,
-                    lastModified: now.toISOString(),
-                    version: '1.0',
-                    key: uniqueKey,
-                    program: config.program,
-                    createdDate: now.toISOString()
-                }
+                ...config,
+                lastModified: now.toISOString(),
+                version: isUpdate ? (config.version || '1.0') : '1.0',
+                key: uniqueKey,
+                program: config.program,
+                createdDate: isUpdate ? (config.createdDate || now.toISOString()) : now.toISOString()
             }
             
             // Créer ou mettre à jour le datastore dans DHIS2 avec la clé unique
@@ -132,15 +163,20 @@ const BulletinConfig = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(bulletinConfig.data)
+                body: JSON.stringify(bulletinConfig)
             })
             
             if (response.ok) {
                 console.log('Configuration sauvegardée dans le datastore DHIS2 avec la clé:', uniqueKey)
                 setSaveStatus({ 
                     type: 'success', 
-                    message: `Configuration sauvegardée avec succès dans le datastore DHIS2 (GENERATE-BULLETIN/${uniqueKey})` 
+                    message: `Configuration ${isUpdate ? 'mise à jour' : 'sauvegardée'} avec succès dans le datastore DHIS2 (GENERATE-BULLETIN/${uniqueKey})` 
                 })
+                
+                // Appeler le callback de sauvegarde si fourni
+                if (onConfigSaved) {
+                    onConfigSaved()
+                }
             } else {
                 const errorData = await response.json()
                 console.error('Erreur lors de la sauvegarde:', errorData)
@@ -1099,24 +1135,24 @@ const BulletinConfig = () => {
                     
                     <BullOrgUnit config={config} setConfig={setConfig} />
                 </div>
-            </div>
+                </div>
 
             {/* Rubriques & sous-rubriques - Prend toute la largeur */}
             <div style={{...cardStyle, marginBottom: '32px'}}>
-                <div style={sectionHeaderStyle}>
-                    <BarChart3 size={24} color="#3b82f6" />
-                    Rubriques & sous-rubriques
-                </div>
-                
+                    <div style={sectionHeaderStyle}>
+                        <BarChart3 size={24} color="#3b82f6" />
+                        Rubriques & sous-rubriques
+                    </div>
+                    
                 <div style={{ marginBottom: '24px' }}>
-                    <Button 
-                        secondary 
-                        onClick={addSection} 
-                        icon={<Plus size={16} />}
-                    >
-                        Ajouter une rubrique
-                    </Button>
-                </div>
+                        <Button 
+                            secondary 
+                            onClick={addSection} 
+                            icon={<Plus size={16} />}
+                        >
+                            Ajouter une rubrique
+                        </Button>
+                    </div>
 
                 <div style={{ 
                     display: 'grid', 

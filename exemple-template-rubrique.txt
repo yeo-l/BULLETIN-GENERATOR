@@ -1,0 +1,34 @@
+RUBRIQUE {rubrique_number} : {rubrique_title}
+=============================================
+
+{rubrique_description}
+
+INFORMATIONS GÉNÉRALES
+======================
+Programme : {programme_name}
+Établissement : {etablissement}
+Région : {region}
+District : {district}
+
+Période : {periode_start} au {periode_end}
+
+INDICATEURS DE PERFORMANCE
+==========================
+
+1. {indicateur_1_name}
+   Valeur : {indicateur_1_value} {indicateur_1_unit}
+   Cible : {indicateur_1_target} {indicateur_1_unit}
+   Réalisation : {indicateur_1_achievement}
+
+2. {indicateur_2_name}
+   Valeur : {indicateur_2_value} {indicateur_2_unit}
+   Cible : {indicateur_2_target} {indicateur_2_unit}
+   Réalisation : {indicateur_2_achievement}
+
+3. {indicateur_3_name}
+   Valeur : {indicateur_3_value} {indicateur_3_unit}
+   Cible : {indicateur_3_target} {indicateur_3_unit}
+   Réalisation : {indicateur_3_achievement}
+
+---
+Généré automatiquement le {date_generation} à {heure_generation}

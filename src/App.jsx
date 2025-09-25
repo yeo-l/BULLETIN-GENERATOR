@@ -22,6 +22,7 @@ const query = {
 const MyApp = () => {
     const { error, loading, data } = useDataQuery(query)
     const [activeContent, setActiveContent] = useState(null)
+    const [configToEdit, setConfigToEdit] = useState(null)
 
     if (error) {
         return (
@@ -63,8 +64,11 @@ const MyApp = () => {
         <BrowserRouter>
             <div className="App" style={{ display: 'flex', minHeight: '100vh' }}>
                 <Sidebar onSelect={(componentName) => {
-                    if (componentName === 'config') setActiveContent(<BulletinConfig />)
-                    else if (componentName === 'history') setActiveContent(<BulletinHistory />)
+                    if (componentName === 'config') setActiveContent(<BulletinConfig configToEdit={configToEdit} onConfigSaved={() => setConfigToEdit(null)} />)
+                    else if (componentName === 'history') setActiveContent(<BulletinHistory onNavigateToConfig={(component, config) => {
+                        setConfigToEdit(config)
+                        setActiveContent(<BulletinConfig configToEdit={config} onConfigSaved={() => setConfigToEdit(null)} />)
+                    }} />)
                     else if (componentName === 'generate') setActiveContent(<BulletinGenerator />)
                     else if (componentName === 'import') setActiveContent(<DocumentImport />)
                     else setActiveContent(null)

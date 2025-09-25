@@ -16,7 +16,7 @@ import {
     ChevronUp
 } from 'lucide-react'
 
-const BulletinHistory = () => {
+const BulletinHistory = ({ onNavigateToConfig }) => {
     const [configurations, setConfigurations] = useState([])
     const [isLoading, setIsLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
@@ -157,6 +157,14 @@ const BulletinHistory = () => {
     const loadConfiguration = (config) => {
         setSelectedConfig(config)
         setShowConfigDetails(true)
+    }
+
+    // Fonction pour modifier une configuration
+    const editConfiguration = (config) => {
+        if (onNavigateToConfig) {
+            // Naviguer vers le composant de configuration avec les données à modifier
+            onNavigateToConfig('config', config)
+        }
     }
 
     const filteredConfigurations = getFilteredAndSortedConfigurations()
@@ -552,7 +560,7 @@ const BulletinHistory = () => {
                                         Voir
                                     </button>
                                     <button
-                                        onClick={() => {/* TODO: Implémenter l'édition */}}
+                                        onClick={() => editConfiguration(config)}
                                         style={{
                                             ...buttonStyle,
                                             backgroundColor: '#f59e0b',
@@ -560,7 +568,7 @@ const BulletinHistory = () => {
                                         }}
                                     >
                                         <Edit size={14} />
-                                        Éditer
+                                        Modifier
                                     </button>
                                     <button
                                         onClick={() => deleteConfiguration(config.key)}
