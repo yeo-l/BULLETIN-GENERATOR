@@ -13,8 +13,10 @@ import {
     Settings,
     RefreshCw,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    X
 } from 'lucide-react'
+import './BulletinHistory.css'
 
 const BulletinHistory = ({ onNavigateToConfig }) => {
     const [configurations, setConfigurations] = useState([])
@@ -169,98 +171,33 @@ const BulletinHistory = ({ onNavigateToConfig }) => {
 
     const filteredConfigurations = getFilteredAndSortedConfigurations()
 
-    // Styles
-    const containerStyle = {
-        maxWidth: '1400px',
-        margin: '0 auto',
-        padding: '32px 24px',
-        backgroundColor: '#f8fafc',
-        minHeight: '100vh'
-    }
-
-    const headerStyle = {
-        background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-        color: 'white',
-        padding: '32px',
-        borderRadius: '12px',
-        marginBottom: '32px',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
-    }
-
-    const cardStyle = {
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '24px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-        border: '1px solid #e2e8f0',
-        marginBottom: '16px'
-    }
-
-    const filterCardStyle = {
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '24px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-        border: '1px solid #e2e8f0',
-        marginBottom: '24px'
-    }
-
-    const configCardStyle = {
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '20px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-        border: '1px solid #e2e8f0',
-        marginBottom: '16px',
-        transition: 'all 0.2s ease',
-        cursor: 'pointer'
-    }
-
-    const configCardHoverStyle = {
-        transform: 'translateY(-2px)',
-        boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
-        borderColor: '#3b82f6'
-    }
-
-    const badgeStyle = {
-        padding: '4px 12px',
-        borderRadius: '20px',
-        fontSize: '12px',
-        fontWeight: '600',
-        textTransform: 'uppercase'
-    }
-
-    const buttonStyle = {
-        padding: '8px 16px',
-        border: 'none',
-        borderRadius: '6px',
-        fontSize: '14px',
-        fontWeight: '500',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-        transition: 'all 0.2s ease'
+    // Fonction pour obtenir la classe du badge selon le programme
+    const getProgramBadgeClass = (program) => {
+        switch (program) {
+            case 'PEV': return 'program-badge badge-pev'
+            case 'PNLT': return 'program-badge badge-pnlt'
+            case 'PNN': return 'program-badge badge-pnn'
+            case 'PNLS': return 'program-badge badge-pnls'
+            case 'INHP': return 'program-badge badge-inhp'
+            default: return 'program-badge badge-default'
+        }
     }
 
     return (
-        <div style={containerStyle}>
+        <div className="bulletin-history">
             {/* Header */}
-            <div style={headerStyle}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                        <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '8px' }}>
-                            Historique des Bulletins
-                        </h1>
-                        <p style={{ opacity: 0.9, fontSize: '16px' }}>
-                            Gérez et consultez vos configurations de bulletins
-                        </p>
+            <div className="history-header">
+                <div className="header-content">
+                    <div className="header-text">
+                        <h1>Historique des Bulletins</h1>
+                        <p>Gérez et consultez vos configurations de bulletins</p>
                     </div>
                     <Button 
                         primary 
                         onClick={loadConfigurations} 
                         icon={<RefreshCw size={18} />}
                         loading={isLoading}
+                        className="refresh-btn"
                     >
                         Actualiser
                     </Button>
@@ -268,53 +205,33 @@ const BulletinHistory = ({ onNavigateToConfig }) => {
             </div>
 
             {/* Filtres et recherche */}
-            <div style={filterCardStyle}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>
-                        Filtres et recherche
-                    </h3>
+            <div className="filters-section">
+                <div className="filters-header">
+                    <h3>Filtres et recherche</h3>
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        style={{
-                            ...buttonStyle,
-                            backgroundColor: '#f1f5f9',
-                            color: '#374151'
-                        }}
+                        className="filter-toggle"
                     >
                         {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         Filtres
                     </button>
                 </div>
 
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
-                    <div style={{ flex: 1, position: 'relative' }}>
-                        <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }} />
+                <div className="search-filters">
+                    <div className="search-container">
+                        <Search size={16} className="search-icon" />
                         <input
                             type="text"
                             placeholder="Rechercher par programme, titre ou clé..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '12px 12px 12px 40px',
-                                border: '1px solid #d1d5db',
-                                borderRadius: '8px',
-                                fontSize: '14px',
-                                backgroundColor: 'white'
-                            }}
+                            className="search-input"
                         />
                     </div>
                     <select
                         value={selectedProgram}
                         onChange={(e) => setSelectedProgram(e.target.value)}
-                        style={{
-                            padding: '12px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '8px',
-                            fontSize: '14px',
-                            backgroundColor: 'white',
-                            minWidth: '200px'
-                        }}
+                        className="program-select"
                     >
                         <option value="">Tous les programmes</option>
                         {PROGRAM_OPTIONS.map((option) => (
@@ -326,29 +243,13 @@ const BulletinHistory = ({ onNavigateToConfig }) => {
                 </div>
 
                 {showFilters && (
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-                        gap: '16px',
-                        padding: '16px',
-                        backgroundColor: '#f8fafc',
-                        borderRadius: '8px'
-                    }}>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                                Trier par
-                            </label>
+                    <div className="advanced-filters">
+                        <div className="filter-group">
+                            <label className="filter-label">Trier par</label>
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '6px',
-                                    fontSize: '14px',
-                                    backgroundColor: 'white'
-                                }}
+                                className="filter-select"
                             >
                                 <option value="date">Date de modification</option>
                                 <option value="program">Programme</option>
@@ -356,21 +257,12 @@ const BulletinHistory = ({ onNavigateToConfig }) => {
                                 <option value="key">Clé</option>
                             </select>
                         </div>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                                Ordre
-                            </label>
+                        <div className="filter-group">
+                            <label className="filter-label">Ordre</label>
                             <select
                                 value={sortOrder}
                                 onChange={(e) => setSortOrder(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '6px',
-                                    fontSize: '14px',
-                                    backgroundColor: 'white'
-                                }}
+                                className="filter-select"
                             >
                                 <option value="desc">Décroissant</option>
                                 <option value="asc">Croissant</option>
@@ -381,73 +273,39 @@ const BulletinHistory = ({ onNavigateToConfig }) => {
             </div>
 
             {/* Statistiques */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                <div style={cardStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ 
-                            width: '48px', 
-                            height: '48px', 
-                            borderRadius: '12px', 
-                            backgroundColor: '#dbeafe', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center' 
-                        }}>
-                            <FileText size={24} color="#3b82f6" />
+            <div className="stats-grid">
+                <div className="stat-card">
+                    <div className="stat-content">
+                        <div className="stat-icon blue">
+                            <FileText size={24} color="white" />
                         </div>
-                        <div>
-                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1e293b' }}>
-                                {configurations.length}
-                            </div>
-                            <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                                Configurations totales
-                            </div>
+                        <div className="stat-text">
+                            <div className="stat-number">{configurations.length}</div>
+                            <div className="stat-label">Configurations totales</div>
                         </div>
                     </div>
                 </div>
-                <div style={cardStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ 
-                            width: '48px', 
-                            height: '48px', 
-                            borderRadius: '12px', 
-                            backgroundColor: '#dcfce7', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center' 
-                        }}>
-                            <Settings size={24} color="#10b981" />
+                <div className="stat-card">
+                    <div className="stat-content">
+                        <div className="stat-icon green">
+                            <Settings size={24} color="white" />
                         </div>
-                        <div>
-                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1e293b' }}>
-                                {new Set(configurations.map(c => c.program)).size}
-                            </div>
-                            <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                                Programmes différents
-                            </div>
+                        <div className="stat-text">
+                            <div className="stat-number">{new Set(configurations.map(c => c.program)).size}</div>
+                            <div className="stat-label">Programmes différents</div>
                         </div>
                     </div>
                 </div>
-                <div style={cardStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ 
-                            width: '48px', 
-                            height: '48px', 
-                            borderRadius: '12px', 
-                            backgroundColor: '#fef3c7', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center' 
-                        }}>
-                            <Calendar size={24} color="#f59e0b" />
+                <div className="stat-card">
+                    <div className="stat-content">
+                        <div className="stat-icon orange">
+                            <Calendar size={24} color="white" />
                         </div>
-                        <div>
-                            <div style={{ fontSize: '24px', fontWeight: '700', color: '#1e293b' }}>
+                        <div className="stat-text">
+                            <div className="stat-number">
                                 {configurations.filter(c => new Date(c.lastModified) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}
                             </div>
-                            <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                                Modifiées cette semaine
-                            </div>
+                            <div className="stat-label">Modifiées cette semaine</div>
                         </div>
                     </div>
                 </div>
@@ -455,246 +313,170 @@ const BulletinHistory = ({ onNavigateToConfig }) => {
 
             {/* Liste des configurations */}
             {isLoading ? (
-                <div style={{ textAlign: 'center', padding: '60px', color: '#6b7280' }}>
-                    <RefreshCw size={48} style={{ animation: 'spin 1s linear infinite', marginBottom: '16px' }} />
+                <div className="loading-state">
+                    <RefreshCw size={48} className="loading-spinner" />
                     <div>Chargement des configurations...</div>
                 </div>
             ) : filteredConfigurations.length === 0 ? (
-                <div style={cardStyle}>
-                    <div style={{ textAlign: 'center', padding: '40px' }}>
-                        <History size={64} color="#d1d5db" style={{ marginBottom: '16px' }} />
-                        <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
-                            Aucune configuration trouvée
-                        </h3>
-                        <p style={{ color: '#6b7280', marginBottom: '24px' }}>
-                            {searchTerm || selectedProgram 
-                                ? 'Aucune configuration ne correspond à vos critères de recherche.'
-                                : 'Aucune configuration n\'a été créée pour le moment.'
-                            }
-                        </p>
-                        {searchTerm || selectedProgram ? (
-                            <Button 
-                                secondary 
-                                onClick={() => {
-                                    setSearchTerm('')
-                                    setSelectedProgram('')
-                                }}
-                            >
-                                Effacer les filtres
-                            </Button>
-                        ) : (
-                            <Button primary>
-                                Créer une configuration
-                            </Button>
-                        )}
-                    </div>
-                </div>
-            ) : (
-                <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                        <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>
-                            Configurations ({filteredConfigurations.length})
-                        </h3>
-                    </div>
-                    
-                    {filteredConfigurations.map((config) => (
-                        <div 
-                            key={config.key} 
-                            style={configCardStyle}
-                            onMouseEnter={(e) => {
-                                e.target.style.transform = configCardHoverStyle.transform
-                                e.target.style.boxShadow = configCardHoverStyle.boxShadow
-                                e.target.style.borderColor = configCardHoverStyle.borderColor
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.transform = ''
-                                e.target.style.boxShadow = ''
-                                e.target.style.borderColor = ''
+                <div className="empty-state">
+                    <History size={64} className="empty-icon" />
+                    <h3>Aucune configuration trouvée</h3>
+                    <p>
+                        {searchTerm || selectedProgram 
+                            ? 'Aucune configuration ne correspond à vos critères de recherche.'
+                            : 'Aucune configuration n\'a été créée pour le moment.'
+                        }
+                    </p>
+                    {searchTerm || selectedProgram ? (
+                        <Button 
+                            secondary 
+                            onClick={() => {
+                                setSearchTerm('')
+                                setSelectedProgram('')
                             }}
                         >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                                        <span style={{
-                                            ...badgeStyle,
-                                            backgroundColor: config.program === 'PEV' ? '#dbeafe' : 
-                                                           config.program === 'PNLT' ? '#fef3c7' :
-                                                           config.program === 'PNN' ? '#dcfce7' :
-                                                           config.program === 'PNLS' ? '#fce7f3' :
-                                                           config.program === 'INHP' ? '#f3e8ff' :
-                                                           '#f1f5f9',
-                                            color: config.program === 'PEV' ? '#1e40af' : 
-                                                   config.program === 'PNLT' ? '#92400e' :
-                                                   config.program === 'PNN' ? '#166534' :
-                                                   config.program === 'PNLS' ? '#be185d' :
-                                                   config.program === 'INHP' ? '#7c3aed' :
-                                                   '#374151'
-                                        }}>
-                                            {config.program || 'N/A'}
-                                        </span>
-                                        <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', margin: 0 }}>
-                                            {config.coverTitle || 'Sans titre'}
-                                        </h4>
+                            Effacer les filtres
+                        </Button>
+                    ) : (
+                        <Button primary>
+                            Créer une configuration
+                        </Button>
+                    )}
+                </div>
+            ) : (
+                <div className="configurations-section">
+                    <div className="section-header">
+                        <h3>Configurations ({filteredConfigurations.length})</h3>
+                    </div>
+                    
+                    <div className="configuration-list">
+                        {filteredConfigurations.map((config, index) => (
+                            <div 
+                                key={config.key} 
+                                className="configuration-card"
+                                style={{ animationDelay: `${index * 0.1}s` }}
+                            >
+                                <div className="configuration-content">
+                                    <div className="configuration-info">
+                                        <div className="configuration-header">
+                                            <span className={getProgramBadgeClass(config.program)}>
+                                                {config.program || 'N/A'}
+                                            </span>
+                                            <h4 className="configuration-title">
+                                                {config.coverTitle || 'Sans titre'}
+                                            </h4>
+                                        </div>
+                                        
+                                        <div className="configuration-details">
+                                            <div className="configuration-detail">
+                                                <strong>Périodicité:</strong> {config.periodicity || 'Non définie'}
+                                            </div>
+                                            <div className="configuration-detail">
+                                                <strong>Modifié:</strong> {new Date(config.lastModified || config.createdDate).toLocaleDateString('fr-FR')}
+                                            </div>
+                                        </div>
                                     </div>
                                     
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
-                                        <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                                            <strong>Périodicité:</strong> {config.periodicity || 'Non définie'}
-                                        </div>
-                                        <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                                            <strong>Modifié:</strong> {new Date(config.lastModified || config.createdDate).toLocaleDateString('fr-FR')}
-                                        </div>
+                                    <div className="configuration-actions">
+                                        <button
+                                            onClick={() => loadConfiguration(config)}
+                                            className="action-btn view"
+                                        >
+                                            <Eye size={14} />
+                                            Voir
+                                        </button>
+                                        <button
+                                            onClick={() => editConfiguration(config)}
+                                            className="action-btn edit"
+                                        >
+                                            <Edit size={14} />
+                                            Modifier
+                                        </button>
+                                        <button
+                                            onClick={() => deleteConfiguration(config.key)}
+                                            className="action-btn delete"
+                                        >
+                                            <Trash2 size={14} />
+                                            Supprimer
+                                        </button>
                                     </div>
                                 </div>
-                                
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button
-                                        onClick={() => loadConfiguration(config)}
-                                        style={{
-                                            ...buttonStyle,
-                                            backgroundColor: '#3b82f6',
-                                            color: 'white'
-                                        }}
-                                    >
-                                        <Eye size={14} />
-                                        Voir
-                                    </button>
-                                    <button
-                                        onClick={() => editConfiguration(config)}
-                                        style={{
-                                            ...buttonStyle,
-                                            backgroundColor: '#f59e0b',
-                                            color: 'white'
-                                        }}
-                                    >
-                                        <Edit size={14} />
-                                        Modifier
-                                    </button>
-                                    <button
-                                        onClick={() => deleteConfiguration(config.key)}
-                                        style={{
-                                            ...buttonStyle,
-                                            backgroundColor: '#ef4444',
-                                            color: 'white'
-                                        }}
-                                    >
-                                        <Trash2 size={14} />
-                                        Supprimer
-                                    </button>
-                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             )}
 
             {/* Modal de détails de configuration */}
             {showConfigDetails && selectedConfig && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000,
-                    backdropFilter: 'blur(4px)'
-                }} onClick={() => setShowConfigDetails(false)}>
-                    <div style={{
-                        backgroundColor: 'white',
-                        borderRadius: '12px',
-                        padding: '32px',
-                        width: '90vw',
-                        maxWidth: '800px',
-                        maxHeight: '80vh',
-                        overflow: 'auto',
-                        boxShadow: '0 20px 25px rgba(0,0,0,0.1)'
-                    }} onClick={(e) => e.stopPropagation()}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                            <h2 style={{ fontSize: '24px', fontWeight: '600', color: '#1e293b' }}>
-                                Détails de la configuration
-                            </h2>
-                            <Button onClick={() => setShowConfigDetails(false)} secondary>
-                                Fermer
-                            </Button>
+                <div className="modal-overlay" onClick={() => setShowConfigDetails(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Détails de la configuration</h2>
+                            <button 
+                                onClick={() => setShowConfigDetails(false)}
+                                className="modal-close-btn"
+                            >
+                                <X size={20} />
+                            </button>
                         </div>
                         
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                            <div>
-                                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#374151', marginBottom: '16px' }}>
-                                    Informations générales
-                                </h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                    <div>
-                                        <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Programme</label>
-                                        <div style={{ fontSize: '16px', color: '#1e293b' }}>{selectedConfig.program || 'Non défini'}</div>
+                        <div className="modal-grid">
+                            <div className="modal-section">
+                                <h3>Informations générales</h3>
+                                <div className="info-group">
+                                    <div className="info-item">
+                                        <label>Programme</label>
+                                        <div>{selectedConfig.program || 'Non défini'}</div>
                                     </div>
-                                    <div>
-                                        <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Titre</label>
-                                        <div style={{ fontSize: '16px', color: '#1e293b' }}>{selectedConfig.coverTitle || 'Sans titre'}</div>
+                                    <div className="info-item">
+                                        <label>Titre</label>
+                                        <div>{selectedConfig.coverTitle || 'Sans titre'}</div>
                                     </div>
-                                    <div>
-                                        <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Périodicité</label>
-                                        <div style={{ fontSize: '16px', color: '#1e293b' }}>{selectedConfig.periodicity || 'Non définie'}</div>
+                                    <div className="info-item">
+                                        <label>Périodicité</label>
+                                        <div>{selectedConfig.periodicity || 'Non définie'}</div>
                                     </div>
-                                    <div>
-                                        <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Génération automatique</label>
-                                        <div style={{ fontSize: '16px', color: '#1e293b' }}>
-                                            {selectedConfig.autoGenerate ? 'Activée' : 'Désactivée'}
-                                        </div>
+                                    <div className="info-item">
+                                        <label>Génération automatique</label>
+                                        <div>{selectedConfig.autoGenerate ? 'Activée' : 'Désactivée'}</div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div>
-                                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#374151', marginBottom: '16px' }}>
-                                    Métadonnées
-                                </h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                    <div>
-                                        <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Clé</label>
-                                        <div style={{ fontSize: '16px', color: '#1e293b', fontFamily: 'monospace' }}>{selectedConfig.key}</div>
+                            <div className="modal-section">
+                                <h3>Métadonnées</h3>
+                                <div className="info-group">
+                                    <div className="info-item">
+                                        <label>Clé</label>
+                                        <div style={{ fontFamily: 'monospace' }}>{selectedConfig.key}</div>
                                     </div>
-                                    <div>
-                                        <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Créé le</label>
-                                        <div style={{ fontSize: '16px', color: '#1e293b' }}>
-                                            {new Date(selectedConfig.createdDate).toLocaleString('fr-FR')}
-                                        </div>
+                                    <div className="info-item">
+                                        <label>Créé le</label>
+                                        <div>{new Date(selectedConfig.createdDate).toLocaleString('fr-FR')}</div>
                                     </div>
-                                    <div>
-                                        <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Modifié le</label>
-                                        <div style={{ fontSize: '16px', color: '#1e293b' }}>
-                                            {new Date(selectedConfig.lastModified).toLocaleString('fr-FR')}
-                                        </div>
+                                    <div className="info-item">
+                                        <label>Modifié le</label>
+                                        <div>{new Date(selectedConfig.lastModified).toLocaleString('fr-FR')}</div>
                                     </div>
-                                    <div>
-                                        <label style={{ fontSize: '14px', fontWeight: '500', color: '#6b7280' }}>Version</label>
-                                        <div style={{ fontSize: '16px', color: '#1e293b' }}>{selectedConfig.version || '1.0'}</div>
+                                    <div className="info-item">
+                                        <label>Version</label>
+                                        <div>{selectedConfig.version || '1.0'}</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
                         {selectedConfig.sections && selectedConfig.sections.length > 0 && (
-                            <div style={{ marginTop: '24px' }}>
-                                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#374151', marginBottom: '16px' }}>
-                                    Rubriques configurées ({selectedConfig.sections.length})
-                                </h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div className="modal-section">
+                                <h3>Rubriques configurées ({selectedConfig.sections.length})</h3>
+                                <div className="sections-list">
                                     {selectedConfig.sections.map((section, index) => (
-                                        <div key={section.id || index} style={{
-                                            padding: '12px',
-                                            backgroundColor: '#f8fafc',
-                                            borderRadius: '8px',
-                                            border: '1px solid #e2e8f0'
-                                        }}>
-                                            <div style={{ fontWeight: '500', color: '#374151', marginBottom: '4px' }}>
+                                        <div key={section.id || index} className="section-item">
+                                            <div className="section-title">
                                                 {section.title || `Rubrique ${index + 1}`}
                                             </div>
-                                            <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                                            <div className="section-subtitle">
                                                 {section.subsections?.length || 0} sous-rubrique(s)
                                             </div>
                                         </div>

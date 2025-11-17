@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Button, Card, InputField, Checkbox, SingleSelect, MultiSelect, NoticeBox } from '@dhis2/ui'
-import { Save, Plus, Settings, BarChart3, Clock, Trash2, ChevronRight, ChevronLeft, Search, Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react'
+import { Save, Plus, Settings, BarChart3, Clock, Trash2, ChevronRight, ChevronLeft, Search, Upload, FileText, X, CheckCircle, AlertCircle, Eye } from 'lucide-react'
 import BullOrgUnit from './BullOrgUnit'
 import BulletinIndicators from './BulletinIndicators'
 
@@ -19,15 +19,60 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
         periodicity: '',
         sections: [],
         selectedOrgUnits: [],
-        periodValue: {} // Added for relative period selection
+        periodValue: {
+            year: new Date().getFullYear(),
+            month: new Date().getMonth() + 1,
+            week: 1,
+            quarter: 1,
+            semester: 1,
+            biweek: 1
+        }
     })
     const [saveStatus, setSaveStatus] = useState(null)
     const [showNewProgramModal, setShowNewProgramModal] = useState(false)
     const [newProgramName, setNewProgramName] = useState('')
     const [showIndicatorSelector, setShowIndicatorSelector] = useState(false)
+    const [showVisualizationSelector, setShowVisualizationSelector] = useState(false)
     const [currentSubsection, setCurrentSubsection] = useState(null)
     const [currentIndicatorGroup, setCurrentIndicatorGroup] = useState(null)
+    const [currentVisualizationGroup, setCurrentVisualizationGroup] = useState(null)
     const [indicatorSearch, setIndicatorSearch] = useState('')
+    const [visualizations, setVisualizations] = useState([])
+    const [loadingVisualizations, setLoadingVisualizations] = useState(false)
+
+    // Charger les visualisations depuis l'API DHIS2
+    useEffect(() => {
+        if (showVisualizationSelector) {
+            fetchVisualizations()
+        }
+    }, [showVisualizationSelector])
+
+    const fetchVisualizations = async () => {
+        setLoadingVisualizations(true)
+        try {
+            // Appel API DHIS2 pour récupérer les visualisations avec leurs UID
+            const response = await fetch('/api/visualizations?fields=id,name,type&paging=false')
+            if (response.ok) {
+                const data = await response.json()
+                console.log('Visualisations récupérées:', data)
+                
+                if (data.visualizations && Array.isArray(data.visualizations)) {
+                    setVisualizations(data.visualizations)
+                } else {
+                    console.error('Format de données invalide:', data)
+                    setVisualizations([])
+                }
+            } else {
+                console.error('Erreur lors du chargement des visualisations:', response.status)
+                setVisualizations([])
+            }
+        } catch (error) {
+            console.error('Erreur de connexion:', error)
+            setVisualizations([])
+        } finally {
+            setLoadingVisualizations(false)
+        }
+    }
 
     // Charger les données de configuration à modifier
     useEffect(() => {
@@ -47,8 +92,15 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
                 periodicity: configToEdit.periodicity || '',
                 sections: configToEdit.sections || [],
                 selectedOrgUnits: configToEdit.selectedOrgUnits || [],
-                periodValue: configToEdit.periodValue || {},
-                key: configToEdit.key || null // Conserver la clé pour la mise à jour
+                periodValue: configToEdit.periodValue || { 
+                    year: new Date().getFullYear(), 
+                    month: new Date().getMonth() + 1,
+                    week: 1,
+                    quarter: 1,
+                    semester: 1,
+                    biweek: 1
+                },
+                key: configToEdit.key || null
             })
             setSaveStatus({
                 type: 'info',
@@ -85,34 +137,54 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
         { value: "text", label: "Texte" }
     ]
 
-
-
     const getPeriodDisplayText = () => {
         if (!config.periodicity || !config.periodValue) return ''
         
         const { periodicity, periodValue } = config
         
+        console.log('Debug periodValue:', periodValue) // Pour debugger
+        
         switch (periodicity) {
             case 'WEEKLY':
-                return `Semaine ${periodValue.week} de ${periodValue.year}`
+                return `Semaine ${periodValue.week || 1} de ${periodValue.year || new Date().getFullYear()}`
             case 'MONTHLY':
                 const months = [
                     'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
                     'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
                 ]
-                return `${months[periodValue.month - 1]} ${periodValue.year}`
+                const monthValue = periodValue.month || new Date().getMonth() + 1
+                const yearValue = periodValue.year || new Date().getFullYear()
+                if (monthValue >= 1 && monthValue <= 12) {
+                    return `${months[monthValue - 1]} ${yearValue}`
+                } else {
+                    return `Mois ${monthValue} ${yearValue}`
+                }
             case 'QUARTERLY':
                 const quarters = [
                     '1er Trimestre', '2ème Trimestre', '3ème Trimestre', '4ème Trimestre'
                 ]
-                return `${quarters[periodValue.quarter - 1]} ${periodValue.year}`
+                const quarterValue = periodValue.quarter || 1
+                const quarterYear = periodValue.year || new Date().getFullYear()
+                if (quarterValue >= 1 && quarterValue <= 4) {
+                    return `${quarters[quarterValue - 1]} ${quarterYear}`
+                } else {
+                    return `Trimestre ${quarterValue} ${quarterYear}`
+                }
             case 'YEARLY':
-                return `Année ${periodValue.year}`
+                return `Année ${periodValue.year || new Date().getFullYear()}`
             case 'BIWEEKLY':
-                return `Période ${periodValue.biweek} (Semaines ${(periodValue.biweek - 1) * 2 + 1}-${periodValue.biweek * 2}) de ${periodValue.year}`
+                const biweekValue = periodValue.biweek || 1
+                const biweekYear = periodValue.year || new Date().getFullYear()
+                return `Période ${biweekValue} (Semaines ${(biweekValue - 1) * 2 + 1}-${biweekValue * 2}) de ${biweekYear}`
             case 'SEMIANNUAL':
                 const semesters = ['1er Semestre', '2ème Semestre']
-                return `${semesters[periodValue.semester - 1]} ${periodValue.year}`
+                const semesterValue = periodValue.semester || 1
+                const semesterYear = periodValue.year || new Date().getFullYear()
+                if (semesterValue >= 1 && semesterValue <= 2) {
+                    return `${semesters[semesterValue - 1]} ${semesterYear}`
+                } else {
+                    return `Semestre ${semesterValue} ${semesterYear}`
+                }
             default:
                 return ''
         }
@@ -263,6 +335,98 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
         setIndicatorSearch('')
     }
 
+    // Fonctions pour le sélecteur de visualisations
+    const openVisualizationSelector = (subsectionId, groupId) => {
+        // Trouver la sous-section et le groupe correspondants
+        const subsection = config.sections
+            .flatMap(section => section.subsections || [])
+            .find(sub => sub.id === subsectionId)
+        
+        const group = subsection?.visualizationGroups?.find(g => g.id === groupId)
+        
+        if (subsection && group) {
+            setCurrentSubsection(subsection)
+            setCurrentVisualizationGroup(group)
+            setShowVisualizationSelector(true)
+        }
+    }
+
+    const closeVisualizationSelector = () => {
+        setShowVisualizationSelector(false)
+        setCurrentSubsection(null)
+        setCurrentVisualizationGroup(null)
+    }
+
+    const getSelectedVisualizations = () => {
+        if (!currentVisualizationGroup) return []
+        return currentVisualizationGroup.selectedVisualizations || []
+    }
+
+    const addVisualization = (visualization) => {
+        if (!currentVisualizationGroup) return
+        
+        const updatedVisualizations = [...getSelectedVisualizations(), {
+            id: visualization.id,
+            name: visualization.name,
+            type: visualization.type
+        }]
+        updateVisualizationGroupVisualizations(updatedVisualizations)
+    }
+
+    const removeVisualization = (visualization) => {
+        if (!currentVisualizationGroup) return
+        
+        const updatedVisualizations = getSelectedVisualizations().filter(viz => viz.id !== visualization.id)
+        updateVisualizationGroupVisualizations(updatedVisualizations)
+    }
+
+    const addAllVisualizations = () => {
+        if (!currentVisualizationGroup) return
+        
+        const updatedVisualizations = [...getSelectedVisualizations(), ...visualizations.map(viz => ({
+            id: viz.id,
+            name: viz.name,
+            type: viz.type
+        }))]
+        updateVisualizationGroupVisualizations(updatedVisualizations)
+    }
+
+    const removeAllVisualizations = () => {
+        if (!currentVisualizationGroup) return
+        updateVisualizationGroupVisualizations([])
+    }
+
+    const updateVisualizationGroupVisualizations = (visualizations) => {
+        if (!currentVisualizationGroup || !currentSubsection) return
+
+        // Trouver la section et sous-section correspondantes
+        const updatedSections = (config.sections || []).map(section => ({
+            ...section,
+            subsections: (section.subsections || []).map(subsection => {
+                if (subsection.id === currentSubsection.id) {
+                    return {
+                        ...subsection,
+                        visualizationGroups: (subsection.visualizationGroups || []).map(group => 
+                            group.id === currentVisualizationGroup.id 
+                                ? { ...group, selectedVisualizations: visualizations }
+                                : group
+                        )
+                    }
+                }
+                return subsection
+            })
+        }))
+
+        setConfig({ ...config, sections: updatedSections })
+        
+        // Mettre à jour currentVisualizationGroup
+        const updatedGroup = updatedSections
+            .flatMap(s => s.subsections)
+            .flatMap(sub => sub.visualizationGroups || [])
+            .find(group => group.id === currentVisualizationGroup.id)
+        setCurrentVisualizationGroup(updatedGroup)
+    }
+
     const getSelectedIndicators = () => {
         if (!currentIndicatorGroup) return []
         return currentIndicatorGroup.selectedIndicators || []
@@ -272,8 +436,6 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
         // Cette fonction sera gérée par BulletinIndicators
         return []
     }
-
-
 
     const addIndicator = (indicator) => {
         if (!currentIndicatorGroup) return
@@ -333,20 +495,14 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
         setCurrentIndicatorGroup(updatedGroup)
     }
 
-    
-    const templates = [
-        { value: 'standard', label: 'Standard' },
-        { value: 'detailed', label: 'Détaillé' },
-        { value: 'summary', label: 'Résumé' }
-    ]
-
-    // Styles inline
+    // Styles inline avec animations
     const containerStyle = {
         maxWidth: '1200px',
         margin: '0 auto',
         padding: '32px 24px',
         backgroundColor: '#f8fafc',
-        minHeight: '100vh'
+        minHeight: '100vh',
+        animation: 'fadeInUp 0.6s ease-out'
     }
 
     const headerStyle = {
@@ -355,7 +511,8 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
         padding: '32px',
         borderRadius: '12px',
         marginBottom: '32px',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
+        boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+        animation: 'slideInUp 0.5s ease-out'
     }
 
     const cardStyle = {
@@ -364,7 +521,9 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
         padding: '32px',
         boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
         border: '1px solid #e2e8f0',
-        marginBottom: '24px'
+        marginBottom: '24px',
+        transition: 'all 0.3s ease',
+        animation: 'slideInUp 0.5s ease-out'
     }
 
     const sectionHeaderStyle = {
@@ -399,8 +558,10 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
         borderRadius: '8px',
         fontWeight: '500',
         cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        boxShadow: '0 2px 4px rgba(249, 115, 22, 0.2)'
+        transition: 'all 0.3s ease',
+        boxShadow: '0 2px 4px rgba(249, 115, 22, 0.2)',
+        position: 'relative',
+        overflow: 'hidden'
     }
 
     const modalOverlayStyle = {
@@ -414,7 +575,8 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1000,
-        backdropFilter: 'blur(4px)'
+        backdropFilter: 'blur(4px)',
+        animation: 'fadeIn 0.3s ease-out'
     }
 
     const modalStyle = {
@@ -423,7 +585,8 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
         padding: '32px',
         width: '480px',
         maxWidth: '90vw',
-        boxShadow: '0 20px 25px rgba(0,0,0,0.1)'
+        boxShadow: '0 20px 25px rgba(0,0,0,0.1)',
+        animation: 'scaleIn 0.3s ease-out'
     }
 
     const sectionCardStyle = {
@@ -432,7 +595,9 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
         padding: '20px',
         marginBottom: '16px',
         border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        transition: 'all 0.3s ease',
+        animation: 'fadeIn 0.4s ease-out'
     }
 
     const subsectionCardStyle = {
@@ -440,16 +605,35 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
         borderRadius: '8px',
         padding: '16px',
         marginBottom: '12px',
-        border: '1px solid #e2e8f0'
+        border: '1px solid #e2e8f0',
+        transition: 'all 0.2s ease',
+        animation: 'slideInRight 0.3s ease-out'
     }
 
     const badgeStyle = {
-        backgroundColor: '#f1f5f9',
-        color: '#64748b',
+        backgroundColor: '#dbeafe',
+        color: '#1e40af',
         padding: '4px 8px',
         borderRadius: '4px',
         fontSize: '12px',
-        fontWeight: '500'
+        fontWeight: '500',
+        display: 'inline-block',
+        margin: '2px',
+        transition: 'all 0.2s ease',
+        animation: 'bounceIn 0.3s ease-out'
+    }
+
+    const visualizationBadgeStyle = {
+        backgroundColor: '#f0fdf4',
+        color: '#166534',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        fontWeight: '500',
+        display: 'inline-block',
+        margin: '2px',
+        transition: 'all 0.2s ease',
+        animation: 'bounceIn 0.3s ease-out'
     }
 
     const inputStyle = {
@@ -458,7 +642,8 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
         borderRadius: '6px',
         fontSize: '14px',
         width: '100%',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        transition: 'all 0.2s ease'
     }
 
     const selectStyle = {
@@ -467,13 +652,179 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
         borderRadius: '6px',
         fontSize: '14px',
         backgroundColor: 'white',
-        minWidth: '120px'
+        minWidth: '120px',
+        transition: 'all 0.2s ease'
+    }
+
+    // Handler pour les effets hover
+    const handleCardHover = (e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)'
+        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)'
+    }
+
+    const handleCardLeave = (e) => {
+        e.currentTarget.style.transform = 'translateY(0)'
+        e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.05)'
+    }
+
+    const handleSectionHover = (e) => {
+        e.currentTarget.style.transform = 'translateX(4px)'
+        e.currentTarget.style.borderLeft = '4px solid #3b82f6'
+    }
+
+    const handleSectionLeave = (e) => {
+        e.currentTarget.style.transform = 'translateX(0)'
+        e.currentTarget.style.borderLeft = '1px solid #e2e8f0'
+    }
+
+    const handleSubsectionHover = (e) => {
+        e.currentTarget.style.backgroundColor = '#f0f4ff'
+        e.currentTarget.style.transform = 'translateX(2px)'
+    }
+
+    const handleSubsectionLeave = (e) => {
+        e.currentTarget.style.backgroundColor = '#f8fafc'
+        e.currentTarget.style.transform = 'translateX(0)'
+    }
+
+    const handleButtonHover = (e) => {
+        e.currentTarget.style.transform = 'translateY(-1px)'
+        e.currentTarget.style.boxShadow = '0 4px 12px rgba(249, 115, 22, 0.3)'
+    }
+
+    const handleButtonLeave = (e) => {
+        e.currentTarget.style.transform = 'translateY(0)'
+        e.currentTarget.style.boxShadow = '0 2px 4px rgba(249, 115, 22, 0.2)'
+    }
+
+    const handleBadgeHover = (e) => {
+        e.currentTarget.style.transform = 'scale(1.05)'
+        e.currentTarget.style.backgroundColor = '#3b82f6'
+        e.currentTarget.style.color = 'white'
+    }
+
+    const handleBadgeLeave = (e) => {
+        e.currentTarget.style.transform = 'scale(1)'
+        e.currentTarget.style.backgroundColor = '#dbeafe'
+        e.currentTarget.style.color = '#1e40af'
+    }
+
+    const handleVisualizationBadgeHover = (e) => {
+        e.currentTarget.style.transform = 'scale(1.05)'
+        e.currentTarget.style.backgroundColor = '#10b981'
+        e.currentTarget.style.color = 'white'
+    }
+
+    const handleVisualizationBadgeLeave = (e) => {
+        e.currentTarget.style.transform = 'scale(1)'
+        e.currentTarget.style.backgroundColor = '#f0fdf4'
+        e.currentTarget.style.color = '#166534'
     }
 
     return (
-        <div style={containerStyle}>
+        <div style={containerStyle} className="bulletin-config-container">
+            {/* Styles CSS pour les animations */}
+            <style>
+                {`
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(30px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                @keyframes slideInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                    }
+                    to {
+                        opacity: 1;
+                    }
+                }
+
+                @keyframes slideInRight {
+                    from {
+                        opacity: 0;
+                        transform: translateX(-10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
+                }
+
+                @keyframes scaleIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.9);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
+
+                @keyframes bounceIn {
+                    0% {
+                        opacity: 0;
+                        transform: scale(0.3);
+                    }
+                    50% {
+                        opacity: 1;
+                        transform: scale(1.05);
+                    }
+                    70% {
+                        transform: scale(0.9);
+                    }
+                    100% {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
+
+                @keyframes slideDown {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                .status-message {
+                    animation: slideDown 0.4s ease-out;
+                }
+
+                .animated-button:hover {
+                    transform: translateY(-1px);
+                    boxShadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+                }
+
+                .animated-button:active {
+                    transform: translateY(0);
+                }
+                `}
+            </style>
+
             {/* Header */}
-            <div style={headerStyle}>
+            <div style={headerStyle} className="animated-header">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                         <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '8px' }}>
@@ -488,6 +839,9 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
                         onClick={handleSave} 
                         icon={<Save size={18} />}
                         disabled={!config.program || !config.coverTitle}
+                        className="animated-button"
+                        onMouseEnter={handleButtonHover}
+                        onMouseLeave={handleButtonLeave}
                     >
                         Sauvegarder la configuration
                     </Button>
@@ -495,7 +849,7 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
             </div>
 
             {saveStatus && (
-                <div style={{ marginBottom: '24px' }}>
+                <div style={{ marginBottom: '24px' }} className="status-message">
                     <NoticeBox 
                         title={saveStatus.message}
                         valid={saveStatus.type === 'success'}
@@ -507,7 +861,12 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '32px' }}>
                 {/* Configuration de base */}
-                <div style={cardStyle}>
+                <div 
+                    style={cardStyle} 
+                    className="config-card"
+                    onMouseEnter={handleCardHover}
+                    onMouseLeave={handleCardLeave}
+                >
                     <div style={sectionHeaderStyle}>
                         <Settings size={24} color="#f97316" />
                         Configuration de base
@@ -569,6 +928,9 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
                                     color: 'white',
                                     borderColor: '#f97316'
                                 }}
+                                className="animated-button"
+                                onMouseEnter={handleButtonHover}
+                                onMouseLeave={handleButtonLeave}
                             >
                                 Nouveau
                             </Button>
@@ -607,7 +969,19 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
                                 value={config.periodicity}
                                 onChange={(e) => {
                                     console.log('Périodicité sélectionnée (HTML):', e.target.value)
-                                    setConfig({ ...config, periodicity: e.target.value, periodValue: {} }) // Clear periodValue when periodicity changes
+                                    setConfig({ 
+                                        ...config, 
+                                        periodicity: e.target.value, 
+                                        periodValue: {
+                                            ...config.periodValue,
+                                            year: new Date().getFullYear(),
+                                            month: new Date().getMonth() + 1,
+                                            week: 1,
+                                            quarter: 1,
+                                            semester: 1,
+                                            biweek: 1
+                                        }
+                                    })
                                 }}
                                 style={{
                                     width: '100%',
@@ -659,13 +1033,17 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
                                                 <label style={{ ...labelStyle, fontSize: '12px' }}>Année</label>
                                                 <select
                                                     value={config.periodValue?.year || new Date().getFullYear()}
-                                                    onChange={(e) => setConfig({ 
-                                                        ...config, 
-                                                        periodValue: { 
-                                                            ...config.periodValue, 
-                                                            year: parseInt(e.target.value) 
-                                                        } 
-                                                    })}
+                                                    onChange={(e) => {
+                                                        const newYear = parseInt(e.target.value)
+                                                        console.log('Année sélectionnée:', newYear)
+                                                        setConfig({ 
+                                                            ...config, 
+                                                            periodValue: { 
+                                                                ...config.periodValue, 
+                                                                year: newYear
+                                                            } 
+                                                        })
+                                                    }}
                                                     style={{
                                                         width: '100%',
                                                         padding: '8px 12px',
@@ -721,13 +1099,17 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
                                                 <label style={{ ...labelStyle, fontSize: '12px' }}>Année</label>
                                                 <select
                                                     value={config.periodValue?.year || new Date().getFullYear()}
-                                                    onChange={(e) => setConfig({ 
-                                                        ...config, 
-                                                        periodValue: { 
-                                                            ...config.periodValue, 
-                                                            year: parseInt(e.target.value) 
-                                                        } 
-                                                    })}
+                                                    onChange={(e) => {
+                                                        const newYear = parseInt(e.target.value)
+                                                        console.log('Année sélectionnée:', newYear)
+                                                        setConfig({ 
+                                                            ...config, 
+                                                            periodValue: { 
+                                                                ...config.periodValue, 
+                                                                year: newYear
+                                                            } 
+                                                        })
+                                                    }}
                                                     style={{
                                                         width: '100%',
                                                         padding: '8px 12px',
@@ -750,14 +1132,18 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
                                             <div>
                                                 <label style={{ ...labelStyle, fontSize: '12px' }}>Mois</label>
                                                 <select
-                                                    value={config.periodValue?.month || 1}
-                                                    onChange={(e) => setConfig({ 
-                                                        ...config, 
-                                                        periodValue: { 
-                                                            ...config.periodValue, 
-                                                            month: parseInt(e.target.value) 
-                                                        } 
-                                                    })}
+                                                    value={config.periodValue?.month || new Date().getMonth() + 1}
+                                                    onChange={(e) => {
+                                                        const newMonth = parseInt(e.target.value)
+                                                        console.log('Mois sélectionné:', newMonth, 'Année:', config.periodValue?.year)
+                                                        setConfig({ 
+                                                            ...config, 
+                                                            periodValue: { 
+                                                                ...config.periodValue, 
+                                                                month: newMonth
+                                                            } 
+                                                        })
+                                                    }}
                                                     style={{
                                                         width: '100%',
                                                         padding: '8px 12px',
@@ -984,7 +1370,7 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
                                                     })}
                                                 </select>
                                             </div>
-        <div>
+                                            <div>
                                                 <label style={{ ...labelStyle, fontSize: '12px' }}>Semestre</label>
                                                 <select
                                                     value={config.periodValue?.semester || 1}
@@ -1018,7 +1404,7 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
                                     )}
 
                                     {/* Affichage de la période sélectionnée */}
-                                    {config.periodValue && Object.keys(config.periodValue).length > 0 && (
+                                    {config.periodicity && (
                                         <div style={{
                                             marginTop: '12px',
                                             padding: '12px',
@@ -1127,7 +1513,12 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
                 </div>
 
                 {/* Unités d'organisation (nouveau card) */}
-                <div style={cardStyle}>
+                <div 
+                    style={cardStyle} 
+                    className="config-card"
+                    onMouseEnter={handleCardHover}
+                    onMouseLeave={handleCardLeave}
+                >
                     <div style={sectionHeaderStyle}>
                         <Settings size={24} color="#10b981" />
                         Unités d'organisation
@@ -1135,31 +1526,39 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
                     
                     <BullOrgUnit config={config} setConfig={setConfig} />
                 </div>
-                </div>
+            </div>
 
             {/* Rubriques & sous-rubriques - Prend toute la largeur */}
-            <div style={{...cardStyle, marginBottom: '32px'}}>
-                    <div style={sectionHeaderStyle}>
-                        <BarChart3 size={24} color="#3b82f6" />
-                        Rubriques & sous-rubriques
-                    </div>
-                    
+            <div 
+                style={{...cardStyle, marginBottom: '32px'}} 
+                className="config-card"
+                onMouseEnter={handleCardHover}
+                onMouseLeave={handleCardLeave}
+            >
+                <div style={sectionHeaderStyle}>
+                    <BarChart3 size={24} color="#3b82f6" />
+                    Rubriques & sous-rubriques
+                </div>
+                
                 <div style={{ marginBottom: '24px' }}>
-                        <Button 
-                            secondary 
-                            onClick={addSection} 
-                            icon={<Plus size={16} />}
-                        >
-                            Ajouter une rubrique
-                        </Button>
-                    </div>
+                    <Button 
+                        secondary 
+                        onClick={addSection} 
+                        icon={<Plus size={16} />}
+                        className="animated-button"
+                        onMouseEnter={handleButtonHover}
+                        onMouseLeave={handleButtonLeave}
+                    >
+                        Ajouter une rubrique
+                    </Button>
+                </div>
 
                 <div style={{ 
                     display: 'grid', 
                     gridTemplateColumns: 'repeat(auto-fit, minmax(600px, 1fr))', 
                     gap: '24px' 
                 }}>
-                    {(config.sections || []).map((section) => (
+                    {(config.sections || []).map((section, index) => (
                         <SectionEditor 
                             key={section.id} 
                             section={section} 
@@ -1167,6 +1566,10 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
                             onRemove={() => removeSection(section.id)}
                             presentations={PRESENTATIONS}
                             onOpenIndicatorSelector={openIndicatorSelector}
+                            onOpenVisualizationSelector={openVisualizationSelector}
+                            style={{
+                                animationDelay: `${index * 0.1}s`
+                            }}
                         />
                     ))}
                 </div>
@@ -1191,7 +1594,13 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
                             <Button onClick={() => setShowNewProgramModal(false)} secondary>
                                 Annuler
                             </Button>
-                            <Button onClick={handleAddNewProgram} primary>
+                            <Button 
+                                onClick={handleAddNewProgram} 
+                                primary
+                                className="animated-button"
+                                onMouseEnter={handleButtonHover}
+                                onMouseLeave={handleButtonLeave}
+                            >
                                 Ajouter le programme
                             </Button>
                         </div>
@@ -1212,12 +1621,26 @@ const BulletinConfig = ({ configToEdit, onConfigSaved }) => {
                 />
             )}
 
+            {/* Modal sélecteur de visualisations */}
+            {showVisualizationSelector && (
+                <VisualizationSelector
+                    onClose={closeVisualizationSelector}
+                    selectedVisualizations={getSelectedVisualizations()}
+                    onAddVisualization={addVisualization}
+                    onRemoveVisualization={removeVisualization}
+                    onAddAll={addAllVisualizations}
+                    onRemoveAll={removeAllVisualizations}
+                    groupName={currentVisualizationGroup?.name || 'Groupe de visualisations'}
+                    visualizations={visualizations}
+                    loading={loadingVisualizations}
+                />
+            )}
         </div>
     )
 }
 
-// Composant SectionEditor défini en dehors pour éviter les problèmes de portée
-function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndicatorSelector }) {
+// Composant SectionEditor avec animations
+function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndicatorSelector, onOpenVisualizationSelector, style }) {
     const update = (field, value) => {
         onChange({ ...section, [field]: value })
     }
@@ -1227,7 +1650,8 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
             id: crypto.randomUUID(), 
             title: "Nouvelle sous-rubrique", 
             presentation: "table",
-            indicatorGroups: []
+            indicatorGroups: [],
+            visualizationGroups: []
         }
         onChange({ 
             ...section, 
@@ -1292,6 +1716,47 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
         updateSubsection(subsectionId, updatedSubsection)
     }
 
+    const addVisualizationGroup = (subsectionId) => {
+        const newGroup = {
+            id: crypto.randomUUID(),
+            name: '',
+            selectedVisualizations: []
+        }
+        
+        const updatedSubsection = {
+            ...section.subsections.find(s => s.id === subsectionId),
+            visualizationGroups: [...(section.subsections.find(s => s.id === subsectionId).visualizationGroups || []), newGroup]
+        }
+        
+        updateSubsection(subsectionId, updatedSubsection)
+    }
+
+    const updateVisualizationGroup = (subsectionId, groupId, patch) => {
+        const subsection = section.subsections.find(s => s.id === subsectionId)
+        const updatedGroups = (subsection.visualizationGroups || []).map(group => 
+            group.id === groupId ? { ...group, ...patch } : group
+        )
+        
+        const updatedSubsection = {
+            ...subsection,
+            visualizationGroups: updatedGroups
+        }
+        
+        updateSubsection(subsectionId, updatedSubsection)
+    }
+
+    const removeVisualizationGroup = (subsectionId, groupId) => {
+        const subsection = section.subsections.find(s => s.id === subsectionId)
+        const updatedGroups = (subsection.visualizationGroups || []).filter(group => group.id !== groupId)
+        
+        const updatedSubsection = {
+            ...subsection,
+            visualizationGroups: updatedGroups
+        }
+        
+        updateSubsection(subsectionId, updatedSubsection)
+    }
+
     // Styles pour les éléments du SectionEditor
     const inputStyle = {
         padding: '8px 12px',
@@ -1316,7 +1781,17 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
         borderRadius: '8px',
         padding: '16px',
         marginBottom: '12px',
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#f8fafc',
+        transition: 'all 0.2s ease'
+    }
+
+    const visualizationGroupStyle = {
+        border: '1px solid #e2e8f0',
+        borderRadius: '8px',
+        padding: '16px',
+        marginBottom: '12px',
+        backgroundColor: '#f0fdf4',
+        transition: 'all 0.2s ease'
     }
 
     const indicatorButtonStyle = {
@@ -1331,6 +1806,18 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
         transition: 'all 0.2s ease'
     }
 
+    const visualizationButtonStyle = {
+        padding: '6px 12px',
+        border: '1px solid #d1d5db',
+        borderRadius: '4px',
+        backgroundColor: '#f0fdf4',
+        color: '#166534',
+        fontSize: '12px',
+        fontWeight: '500',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease'
+    }
+
     const badgeStyle = {
         backgroundColor: '#dbeafe',
         color: '#1e40af',
@@ -1339,17 +1826,34 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
         fontSize: '12px',
         fontWeight: '500',
         display: 'inline-block',
-        margin: '2px'
+        margin: '2px',
+        transition: 'all 0.2s ease',
+        animation: 'bounceIn 0.3s ease-out'
     }
 
-    // Styles pour les cartes (définis localement pour éviter les erreurs de portée)
+    const visualizationBadgeStyle = {
+        backgroundColor: '#f0fdf4',
+        color: '#166534',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        fontWeight: '500',
+        display: 'inline-block',
+        margin: '2px',
+        transition: 'all 0.2s ease',
+        animation: 'bounceIn 0.3s ease-out'
+    }
+
+    // Styles pour les cartes
     const sectionCardStyle = {
         backgroundColor: 'white',
         borderRadius: '8px',
         padding: '20px',
         marginBottom: '16px',
         border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        transition: 'all 0.3s ease',
+        animation: 'fadeIn 0.4s ease-out'
     }
 
     const subsectionCardStyle = {
@@ -1357,11 +1861,73 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
         borderRadius: '8px',
         padding: '16px',
         marginBottom: '12px',
-        border: '1px solid #e2e8f0'
+        border: '1px solid #e2e8f0',
+        transition: 'all 0.2s ease',
+        animation: 'slideInRight 0.3s ease-out'
+    }
+
+    // Handlers pour les effets hover
+    const handleSectionHover = (e) => {
+        e.currentTarget.style.transform = 'translateX(4px)'
+        e.currentTarget.style.borderLeft = '4px solid #3b82f6'
+    }
+
+    const handleSectionLeave = (e) => {
+        e.currentTarget.style.transform = 'translateX(0)'
+        e.currentTarget.style.borderLeft = '1px solid #e2e8f0'
+    }
+
+    const handleSubsectionHover = (e) => {
+        e.currentTarget.style.backgroundColor = '#f0f4ff'
+        e.currentTarget.style.transform = 'translateX(2px)'
+    }
+
+    const handleSubsectionLeave = (e) => {
+        e.currentTarget.style.backgroundColor = '#f8fafc'
+        e.currentTarget.style.transform = 'translateX(0)'
+    }
+
+    const handleButtonHover = (e) => {
+        e.currentTarget.style.transform = 'translateY(-1px)'
+        e.currentTarget.style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.3)'
+    }
+
+    const handleButtonLeave = (e) => {
+        e.currentTarget.style.transform = 'translateY(0)'
+        e.currentTarget.style.boxShadow = 'none'
+    }
+
+    const handleBadgeHover = (e) => {
+        e.currentTarget.style.transform = 'scale(1.05)'
+        e.currentTarget.style.backgroundColor = '#3b82f6'
+        e.currentTarget.style.color = 'white'
+    }
+
+    const handleBadgeLeave = (e) => {
+        e.currentTarget.style.transform = 'scale(1)'
+        e.currentTarget.style.backgroundColor = '#dbeafe'
+        e.currentTarget.style.color = '#1e40af'
+    }
+
+    const handleVisualizationBadgeHover = (e) => {
+        e.currentTarget.style.transform = 'scale(1.05)'
+        e.currentTarget.style.backgroundColor = '#10b981'
+        e.currentTarget.style.color = 'white'
+    }
+
+    const handleVisualizationBadgeLeave = (e) => {
+        e.currentTarget.style.transform = 'scale(1)'
+        e.currentTarget.style.backgroundColor = '#f0fdf4'
+        e.currentTarget.style.color = '#166534'
     }
 
     return (
-        <div style={sectionCardStyle}>
+        <div 
+            style={{...sectionCardStyle, ...style}} 
+            className="section-card"
+            onMouseEnter={handleSectionHover}
+            onMouseLeave={handleSectionLeave}
+        >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <input
@@ -1377,6 +1943,9 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
                     destructive 
                     onClick={onRemove}
                     icon={<Trash2 size={16} />}
+                    className="animated-button"
+                    onMouseEnter={handleButtonHover}
+                    onMouseLeave={handleButtonLeave}
                 >
                     Supprimer
                 </Button>
@@ -1388,13 +1957,22 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
                     small 
                     onClick={addSubsection} 
                     icon={<Plus size={16} />}
+                    className="animated-button"
+                    onMouseEnter={handleButtonHover}
+                    onMouseLeave={handleButtonLeave}
                 >
                     Ajouter une sous-rubrique
                 </Button>
             </div>
 
             {(section.subsections || []).map((subsection) => (
-                <div key={subsection.id} style={subsectionCardStyle}>
+                <div 
+                    key={subsection.id} 
+                    style={subsectionCardStyle}
+                    className="subsection-card"
+                    onMouseEnter={handleSubsectionHover}
+                    onMouseLeave={handleSubsectionLeave}
+                >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <input
@@ -1419,6 +1997,9 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
                             destructive 
                             onClick={() => removeSubsection(subsection.id)}
                             icon={<Trash2 size={16} />}
+                            className="animated-button"
+                            onMouseEnter={handleButtonHover}
+                            onMouseLeave={handleButtonLeave}
                         >
                             Supprimer
                         </Button>
@@ -1430,11 +2011,28 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
                             small 
                             onClick={() => addIndicatorGroup(subsection.id)} 
                             icon={<Plus size={16} />}
+                            className="animated-button"
+                            onMouseEnter={handleButtonHover}
+                            onMouseLeave={handleButtonLeave}
                         >
                             Ajouter un groupe d'indicateurs
                         </Button>
+
+                        <Button 
+                            secondary 
+                            small 
+                            onClick={() => addVisualizationGroup(subsection.id)} 
+                            icon={<Eye size={16} />}
+                            style={{ marginLeft: '8px', backgroundColor: '#10b981', borderColor: '#10b981' }}
+                            className="animated-button"
+                            onMouseEnter={handleButtonHover}
+                            onMouseLeave={handleButtonLeave}
+                        >
+                            Ajouter un visualisateur
+                        </Button>
                     </div>
 
+                    {/* Groupes d'indicateurs */}
                     {(subsection.indicatorGroups || []).map((group) => (
                         <div key={group.id} style={indicatorGroupStyle}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -1455,6 +2053,9 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
                                             borderColor: group.name.trim() ? '#3b82f6' : '#9ca3af'
                                         }}
                                         disabled={!group.name.trim()}
+                                        className="animated-button"
+                                        onMouseEnter={handleButtonHover}
+                                        onMouseLeave={handleButtonLeave}
                                     >
                                         Indicateurs ({group.selectedIndicators?.length || 0})
                                     </button>
@@ -1463,6 +2064,9 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
                                         destructive 
                                         onClick={() => removeIndicatorGroup(subsection.id, group.id)}
                                         icon={<Trash2 size={16} />}
+                                        className="animated-button"
+                                        onMouseEnter={handleButtonHover}
+                                        onMouseLeave={handleButtonLeave}
                                     >
                                         Supprimer
                                     </Button>
@@ -1472,8 +2076,73 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
                             {(group.selectedIndicators?.length || 0) > 0 && (
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                                     {group.selectedIndicators?.map((indicator) => (
-                                        <span key={indicator.id} style={badgeStyle}>
+                                        <span 
+                                            key={indicator.id} 
+                                            style={badgeStyle}
+                                            className="indicator-badge"
+                                            onMouseEnter={handleBadgeHover}
+                                            onMouseLeave={handleBadgeLeave}
+                                        >
                                             {indicator.name}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+
+                    {/* Groupes de visualisations */}
+                    {(subsection.visualizationGroups || []).map((group) => (
+                        <div key={group.id} style={visualizationGroupStyle}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <input
+                                    type="text"
+                                    value={group.name}
+                                    onChange={(e) => updateVisualizationGroup(subsection.id, group.id, { name: e.target.value })}
+                                    placeholder="Nom du groupe de visualisations"
+                                    style={{ ...inputStyle, width: '200px' }}
+                                />
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                        onClick={() => onOpenVisualizationSelector(subsection.id, group.id)}
+                                        style={{
+                                            ...visualizationButtonStyle,
+                                            backgroundColor: group.name.trim() ? '#10b981' : '#9ca3af',
+                                            color: 'white',
+                                            borderColor: group.name.trim() ? '#10b981' : '#9ca3af'
+                                        }}
+                                        disabled={!group.name.trim()}
+                                        className="animated-button"
+                                        onMouseEnter={handleButtonHover}
+                                        onMouseLeave={handleButtonLeave}
+                                    >
+                                        Visualisations ({group.selectedVisualizations?.length || 0})
+                                    </button>
+                                    <Button 
+                                        small 
+                                        destructive 
+                                        onClick={() => removeVisualizationGroup(subsection.id, group.id)}
+                                        icon={<Trash2 size={16} />}
+                                        className="animated-button"
+                                        onMouseEnter={handleButtonHover}
+                                        onMouseLeave={handleButtonLeave}
+                                    >
+                                        Supprimer
+                                    </Button>
+                                </div>
+                            </div>
+                            
+                            {(group.selectedVisualizations?.length || 0) > 0 && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                    {group.selectedVisualizations?.map((visualization) => (
+                                        <span 
+                                            key={visualization.id} 
+                                            style={visualizationBadgeStyle}
+                                            className="visualization-badge"
+                                            onMouseEnter={handleVisualizationBadgeHover}
+                                            onMouseLeave={handleVisualizationBadgeLeave}
+                                        >
+                                            {visualization.name} ({visualization.id})
                                         </span>
                                     ))}
                                 </div>
@@ -1486,6 +2155,307 @@ function SectionEditor({ section, onChange, onRemove, presentations, onOpenIndic
     )
 }
 
+// Composant VisualizationSelector
+function VisualizationSelector({ 
+    onClose, 
+    selectedVisualizations, 
+    onAddVisualization, 
+    onRemoveVisualization, 
+    onAddAll, 
+    onRemoveAll, 
+    groupName,
+    visualizations,
+    loading 
+}) {
+    const [searchTerm, setSearchTerm] = useState('')
+    const [availableViz, setAvailableViz] = useState([])
 
+    useEffect(() => {
+        if (visualizations && Array.isArray(visualizations)) {
+            const filtered = visualizations.filter(viz => 
+                !selectedVisualizations.some(selected => selected.id === viz.id)
+            )
+            setAvailableViz(filtered)
+        }
+    }, [visualizations, selectedVisualizations])
+
+    const filteredAvailable = availableViz.filter(viz =>
+        viz.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        viz.id.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
+    const filteredSelected = selectedVisualizations.filter(viz =>
+        viz.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        viz.id.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
+    const handleAdd = (visualization) => {
+        onAddVisualization(visualization)
+    }
+
+    const handleRemove = (visualization) => {
+        onRemoveVisualization(visualization)
+    }
+
+    const modalStyle = {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        backdropFilter: 'blur(4px)',
+        animation: 'fadeIn 0.3s ease-out'
+    }
+
+    const contentStyle = {
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '32px',
+        width: '900px',
+        maxWidth: '90vw',
+        maxHeight: '80vh',
+        boxShadow: '0 20px 25px rgba(0,0,0,0.1)',
+        animation: 'scaleIn 0.3s ease-out',
+        display: 'flex',
+        flexDirection: 'column'
+    }
+
+    const headerStyle = {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '24px',
+        paddingBottom: '16px',
+        borderBottom: '2px solid #f1f5f9'
+    }
+
+    const columnsStyle = {
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '24px',
+        flex: 1,
+        overflow: 'hidden'
+    }
+
+    const columnStyle = {
+        display: 'flex',
+        flexDirection: 'column',
+        border: '1px solid #e2e8f0',
+        borderRadius: '8px',
+        overflow: 'hidden'
+    }
+
+    const columnHeaderStyle = {
+        backgroundColor: '#f8fafc',
+        padding: '16px',
+        borderBottom: '1px solid #e2e8f0',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+    }
+
+    const listStyle = {
+        flex: 1,
+        overflowY: 'auto',
+        padding: '8px',
+        maxHeight: '400px'
+    }
+
+    const itemStyle = {
+        padding: '12px',
+        border: '1px solid #e2e8f0',
+        borderRadius: '6px',
+        marginBottom: '8px',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        backgroundColor: 'white'
+    }
+
+    const selectedItemStyle = {
+        ...itemStyle,
+        backgroundColor: '#f0fdf4',
+        borderColor: '#bbf7d0'
+    }
+
+    const buttonStyle = {
+        padding: '8px 16px',
+        border: '1px solid #d1d5db',
+        borderRadius: '6px',
+        backgroundColor: '#f8fafc',
+        color: '#374151',
+        fontSize: '12px',
+        fontWeight: '500',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease'
+    }
+
+    const handleItemHover = (e) => {
+        e.currentTarget.style.transform = 'translateY(-1px)'
+        e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+    }
+
+    const handleItemLeave = (e) => {
+        e.currentTarget.style.transform = 'translateY(0)'
+        e.currentTarget.style.boxShadow = 'none'
+    }
+
+    const handleButtonHover = (e) => {
+        e.currentTarget.style.transform = 'translateY(-1px)'
+        e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+    }
+
+    const handleButtonLeave = (e) => {
+        e.currentTarget.style.transform = 'translateY(0)'
+        e.currentTarget.style.boxShadow = 'none'
+    }
+
+    return (
+        <div style={modalStyle} onClick={onClose}>
+            <div style={contentStyle} onClick={(e) => e.stopPropagation()}>
+                <div style={headerStyle}>
+                    <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1e293b', margin: 0 }}>
+                        Sélection des visualisations DHIS2 - {groupName}
+                    </h3>
+                    <Button 
+                        small 
+                        secondary 
+                        onClick={onClose}
+                        icon={<X size={16} />}
+                    >
+                        Fermer
+                    </Button>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                    <InputField
+                        placeholder="Rechercher par nom ou UID..."
+                        value={searchTerm}
+                        onChange={({ value }) => setSearchTerm(value)}
+                        style={{ width: '100%' }}
+                    />
+                </div>
+
+                {loading ? (
+                    <div style={{ textAlign: 'center', padding: '40px' }}>
+                        <p>Chargement des visualisations depuis DHIS2...</p>
+                    </div>
+                ) : (
+                    <div style={columnsStyle}>
+                        {/* Visualisations disponibles */}
+                        <div style={columnStyle}>
+                            <div style={columnHeaderStyle}>
+                                <span style={{ fontWeight: '500', color: '#374151' }}>
+                                    Visualisations disponibles ({filteredAvailable.length})
+                                </span>
+                                <button
+                                    onClick={onAddAll}
+                                    style={{
+                                        ...buttonStyle,
+                                        backgroundColor: '#10b981',
+                                        color: 'white',
+                                        borderColor: '#10b981'
+                                    }}
+                                    onMouseEnter={handleButtonHover}
+                                    onMouseLeave={handleButtonLeave}
+                                >
+                                    Tout ajouter
+                                </button>
+                            </div>
+                            <div style={listStyle}>
+                                {filteredAvailable.map((visualization) => (
+                                    <div
+                                        key={visualization.id}
+                                        style={itemStyle}
+                                        onClick={() => handleAdd(visualization)}
+                                        onMouseEnter={handleItemHover}
+                                        onMouseLeave={handleItemLeave}
+                                    >
+                                        <div style={{ fontWeight: '500', marginBottom: '4px' }}>
+                                            {visualization.name}
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
+                                            UID: {visualization.id}
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                                            Type: {visualization.type || 'Non spécifié'}
+                                        </div>
+                                    </div>
+                                ))}
+                                {filteredAvailable.length === 0 && (
+                                    <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
+                                        {visualizations.length === 0 
+                                            ? 'Aucune visualisation trouvée dans DHIS2' 
+                                            : 'Toutes les visualisations sont sélectionnées'
+                                        }
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Visualisations sélectionnées */}
+                        <div style={columnStyle}>
+                            <div style={columnHeaderStyle}>
+                                <span style={{ fontWeight: '500', color: '#374151' }}>
+                                    Visualisations sélectionnées ({filteredSelected.length})
+                                </span>
+                                <button
+                                    onClick={onRemoveAll}
+                                    style={{
+                                        ...buttonStyle,
+                                        backgroundColor: '#ef4444',
+                                        color: 'white',
+                                        borderColor: '#ef4444'
+                                    }}
+                                    onMouseEnter={handleButtonHover}
+                                    onMouseLeave={handleButtonLeave}
+                                >
+                                    Tout retirer
+                                </button>
+                            </div>
+                            <div style={listStyle}>
+                                {filteredSelected.map((visualization) => (
+                                    <div
+                                        key={visualization.id}
+                                        style={selectedItemStyle}
+                                        onClick={() => handleRemove(visualization)}
+                                        onMouseEnter={handleItemHover}
+                                        onMouseLeave={handleItemLeave}
+                                    >
+                                        <div style={{ fontWeight: '500', marginBottom: '4px' }}>
+                                            {visualization.name}
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
+                                            UID: {visualization.id}
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                                            Type: {visualization.type || 'Non spécifié'}
+                                        </div>
+                                    </div>
+                                ))}
+                                {filteredSelected.length === 0 && (
+                                    <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
+                                        Aucune visualisation sélectionnée
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '6px' }}>
+                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                        <strong>Information:</strong> Les visualisations sont récupérées depuis l'API DHIS2 (/api/visualizations). 
+                        Chaque visualisation est identifiée par son UID unique.
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
 
 export default BulletinConfig
